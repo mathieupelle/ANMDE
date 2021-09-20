@@ -127,3 +127,53 @@ grid on
 xlabel('x')
 ylabel('$h_j$')
 legend
+
+%% d)
+
+N_lst = [10,50,linspace(100,1000,10)];
+error = zeros(length(N_lst),1);
+v = @(x) exp(sin(pi*x));
+figure
+for n=1:length(N_lst)
+    N = N_lst(n);
+    x = linspace(0, 2, N);
+    D = zeros(N,N);
+    for i = 1:N
+        for j = 1:N
+            if i == j
+                D(i,j) = 0;
+            else        
+                D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
+            end
+        end
+    end
+    dvdx_fourier = D*v(x)'*pi; %%WHY?
+    dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
+    error(n,1) = mean(abs(dvdx_fourier - dvdx_analytic'));
+    
+    plot(x, dvdx_fourier, 'DisplayName', sprintf('N = %d', N_lst(n)))
+    hold on
+    grid on
+    xlabel('x')
+    ylabel('$\frac{dv}{dx}$')
+    legend
+
+end
+
+plot(x, dvdx_analytic, '--k', 'DisplayName', 'Analytic')
+
+figure
+plot(N_lst, error)
+grid on
+xlabel('N')
+ylabel('error')
+
+    
+
+
+
+
+
+
+
+
