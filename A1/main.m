@@ -131,8 +131,10 @@ legend
 %% d)
 
 N_lst = [10,50,linspace(100,1000,10)];
+%N_lst = 10.^(1:1:4);
 error = zeros(length(N_lst),1);
 v = @(x) exp(sin(pi*x));
+NST = false;
 figure
 for n=1:length(N_lst)
     N = N_lst(n);
@@ -145,6 +147,9 @@ for n=1:length(N_lst)
             else        
                 D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
             end
+        end
+        if NST
+            D(i,i) = -sum(D(i,:));
         end
     end
     dvdx_fourier = D*v(x)'*pi; %%WHY?
@@ -162,18 +167,114 @@ end
 
 plot(x, dvdx_analytic, '--k', 'DisplayName', 'Analytic')
 
+p = polyfit(log(N_lst), log(error), 1);
+order = p(1);
+
 figure
-plot(N_lst, error)
+loglog(N_lst, error)
 grid on
 xlabel('N')
 ylabel('error')
 
     
+%% f) 
+
+syms x 
 
 
+w0 = cos(pi*x);
+w1 = int(w0, x);
+w2 = int(w1, x);
+w3 = int(w2, x);
+w = [w0, w1, w2, w3];
+
+NST = true;
+N = 500;
+x = linspace(-2, 2, N);
+error = zeros(length(w),1);
+figure
+for f=1:length(w)-1
+    D = zeros(N,N);
+    for i = 1:N
+        for j = 1:N
+            if i == j
+                D(i,j) = 0;
+            else        
+                D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
+            end
+        end
+        if NST
+            D(i,i) = -sum(D(i,:));
+        end
+    end
+    w_l = matlabFunction(w(f));
+    w_u = matlabFunction(w(f+1));
+    u = [-w_u(x(x<0)), w_u(x(x>0))];
+    dwdx_fourier = D*u'*pi;
+    dwdx_analytic = [-w_l(x(x<0)), w_l(x(x>0))];
+    error(f,1) = norm(dwdx_fourier' - dwdx_analytic);
+    
+    plot(x, dwdx_analytic, 'DisplayName', sprintf('$w_{%d}$', f-1));
+    hold on
+end
+plot(x, u, 'DisplayName', sprintf('$w_{%d}$', f));
+grid on
+legend
 
 
+%% g)
 
+N_lst = 10.^(0:1:4);
+error = zeros(length(N_lst),2);
+time = zeros(length(N_lst),2);
+v = @(x) exp(sin(pi*x));
+NST = true;
+figure
+for n=1:length(N_lst)
+    N = N_lst(n);
+    x = linspace(0, 2, N);
+    
+    tstart_fft = cputime ; 
+    k = [0:round(N/2-1), - round(N/2):-1];
+    dvdx_fft = ifft(1i*k.*fft(v(x)));
+    time(n,2) = cputime - tstart_fft ; 
+    
+    tstart_matrix = cputime ; 
+    D = zeros(N,N);
+    for i = 1:N
+        for j = 1:N
+            if i == j
+                D(i,j) = 0;
+            else        
+                D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
+            end
+        end
+        if NST
+            D(i,i) = -sum(D(i,:));
+        end
+    end
+    dvdx_fourier = D*v(x)'*pi; %%WHY?
+    time(n,1) = cputime - tstart_matrix ; 
+    dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
+    error(n,1) = mean(abs(dvdx_fourier - dvdx_analytic'));
+    error(n,2) = mean(abs(dvdx_fft - dvdx_analytic));
 
+end
 
+figure
+loglog(N_lst, error(:,1), 'DisplayName', 'Differentiation matrix')
+hold on
+loglog(N_lst, error(:,2), 'DisplayName', 'FFT')
+grid on
+xlabel('N')
+ylabel('error')
+legend
 
+figure
+plot(N_lst, time(:,1), 'DisplayName', 'Differentiation matrix')
+hold on
+plot(N_lst, time(:,2), 'DisplayName', 'FFT')
+grid on
+xlabel('N')
+ylabel('CPU time')
+legend
