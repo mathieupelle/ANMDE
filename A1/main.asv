@@ -132,15 +132,15 @@ legend
 
 N_lst = [10,50,linspace(100,1000,10)];
 N_lst = 30;
-N_step = 2/N_lst;
 error = zeros(length(N_lst),1);
 v = @(x) exp(sin(pi*x));
 NST = false;
 figure
 for n=1:length(N_lst)
     N = N_lst(n);
-    x = 0:N_step:2-N_step;
-    D = zeros(length(x),length(x));
+    x = linspace(0, 2, N-1);
+    %x = x(2:end);
+    D = zeros(N,N);
     for i = 1:N
         for j = 1:N
             if i == j
