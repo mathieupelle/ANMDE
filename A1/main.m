@@ -130,15 +130,15 @@ legend
 
 %% d)
 
-N_lst = [10,50,linspace(100,1000,10)];
-N_lst = 30;
-N_step = 2/N_lst;
+N_lst = 2:2:50;
+
 error = zeros(length(N_lst),1);
 v = @(x) exp(sin(pi*x));
 NST = false;
 figure
 for n=1:length(N_lst)
     N = N_lst(n);
+    N_step = 2/N;
     x = 0:N_step:2-N_step;
     D = zeros(length(x),length(x));
     for i = 1:N
@@ -153,10 +153,10 @@ for n=1:length(N_lst)
             D(i,i) = -sum(D(i,:));
         end
     end
-    %D = D(2:end,2:end);
-    dvdx_fourier = D*v(x)'*pi; %%WHY?
+
+    dvdx_fourier = D*v(x)'*pi;
     dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
-    error(n,1) = mean(abs(dvdx_fourier - dvdx_analytic'));
+    error(n,1) = norm(dvdx_fourier - dvdx_analytic');
     
     plot(x, dvdx_fourier, 'DisplayName', sprintf('N = %d', N_lst(n)))
     hold on
@@ -172,55 +172,79 @@ plot(x, dvdx_analytic, '--k', 'DisplayName', 'Analytic')
 p = polyfit(log(N_lst), log(error), 1);
 order = p(1);
 
-% figure
-% loglog(N_lst, error)
-% grid on
-% xlabel('N')
-% ylabel('error')
+figure
+loglog(N_lst, error, 'o')
+grid on
+xlabel('N')
+ylabel('error')
 
-    
 %% f) 
 
 syms x 
 
+w0_l = -cos(pi*x);
+w0_r = cos(pi*x);
+w1_l = int(w0_l, x);
+w1_r = int(w0_r, x);
+w2_l = int(w1_l, x);
+w2_r = int(w1_r, x)+2/pi^2;
+w3_l = int(w2_l, x);
+w3_r = int(w2_r, x);
+w = [w0_l, w0_r; w1_l, w1_r; w2_l, w2_r; w3_l, w3_r];
 
-w0 = cos(pi*x);
-w1 = int(w0, x);
-w2 = int(w1, x);
-w3 = int(w2, x);
-w = [w0, w1, w2, w3];
 
 NST = true;
-N = 500;
-x = linspace(-2, 2, N);
-error = zeros(length(w),1);
+N_lst = 4:10:100;
+error = zeros(length(w)-1,length(N_lst));
 figure
-for f=1:length(w)-1
-    D = zeros(N,N);
-    for i = 1:N
-        for j = 1:N
-            if i == j
-                D(i,j) = 0;
-            else        
-                D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
+for n=1:length(N_lst)
+    N = N_lst(n);
+    N_step = 4/N;
+    x = -2:N_step:2-N_step;
+    D = zeros(length(x),length(x));
+    for f=1:length(w)-1
+        for i = 1:N
+            for j = 1:N
+                if i == j
+                    D(i,j) = 0;
+                else        
+                    D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
+                end
+            end
+            if NST
+                D(i,i) = -sum(D(i,:));
             end
         end
-        if NST
-            D(i,i) = -sum(D(i,:));
+        
+        wl_l = matlabFunction(w(f,1));
+        wl_r = matlabFunction(w(f,2));
+        wu_l = matlabFunction(w(f+1,1));
+        wu_r = matlabFunction(w(f+1,2));
+        u = [wu_l(x(x<0)), wu_r(x(x>=0))];
+        dwdx_fourier = D*u'*pi/2;
+        dwdx_analytic = [wl_l(x(x<0)), wl_r(x(x>=0))];
+        error(f,n) = norm(dwdx_fourier' - dwdx_analytic);
+        if n == length(N_lst)
+            plot(x, dwdx_analytic, 'DisplayName', sprintf('$w_{%d}$', f-1));
+            hold on
+            plot(x, dwdx_fourier, 'DisplayName', sprintf('$v_{%d}$', f-1));
         end
     end
-    w_l = matlabFunction(w(f));
-    w_u = matlabFunction(w(f+1));
-    u = [-w_u(x(x<0)), w_u(x(x>0))];
-    dwdx_fourier = D*u'*pi;
-    dwdx_analytic = [-w_l(x(x<0)), w_l(x(x>0))];
-    error(f,1) = norm(dwdx_fourier' - dwdx_analytic);
-    
-    plot(x, dwdx_analytic, 'DisplayName', sprintf('$w_{%d}$', f-1));
-    hold on
 end
 plot(x, u, 'DisplayName', sprintf('$w_{%d}$', f));
 grid on
+legend
+xlabel('x')
+ylabel('$w_i$')
+
+figure
+loglog(N_lst, error(1,:), 'DisplayName', sprintf('$w_{%d}$', 0));
+hold on
+loglog(N_lst, error(2,:), 'DisplayName', sprintf('$w_{%d}$', 1));
+loglog(N_lst, error(3,:), 'DisplayName', sprintf('$w_{%d}$', 2));
+grid on
+xlabel('N')
+ylabel('error')
 legend
 
 
