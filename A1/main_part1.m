@@ -250,23 +250,27 @@ legend
 
 %% g)
 
-N_lst = 10.^(0:1:4);
+N_lst = [10,100,500,1000,5000,10000];
+N_lst = [10]
 error = zeros(length(N_lst),2);
 time = zeros(length(N_lst),2);
 v = @(x) exp(sin(pi*x));
-NST = true;
-figure
+NST = false;
+fftw('dwisdom',[]);
 for n=1:length(N_lst)
     N = N_lst(n);
-    x = linspace(0, 2, N);
+    N_step = 2/N;
+    x = 0:N_step:2-N_step;
     
-    tstart_fft = cputime ; 
+    fftw('planner','measure');
+    fftinfo = fftw('dwisdom');
+    tic;
     k = [0:round(N/2-1), - round(N/2):-1];
-    dvdx_fft = ifft(1i*k.*fft(v(x)));
-    time(n,2) = cputime - tstart_fft ; 
+    dvdx_fft = ifft(1i*k.*fft(v(x)))*pi;
+    time(n,2) = toc;
     
-    tstart_matrix = cputime ; 
-    D = zeros(N,N);
+    tic; 
+    D = zeros(length(x),length(x));
     for i = 1:N
         for j = 1:N
             if i == j
@@ -279,13 +283,14 @@ for n=1:length(N_lst)
             D(i,i) = -sum(D(i,:));
         end
     end
-    dvdx_fourier = D*v(x)'*pi; %%WHY?
-    time(n,1) = cputime - tstart_matrix ; 
+    dvdx_fourier = D*v(x)'*pi;
+    time(n,1) = toc; 
     dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
-    error(n,1) = mean(abs(dvdx_fourier - dvdx_analytic'));
-    error(n,2) = mean(abs(dvdx_fft - dvdx_analytic));
+    error(n,1) = norm(abs(dvdx_fourier - dvdx_analytic'));
+    error(n,2) = norm(abs(dvdx_fft - dvdx_analytic));
 
 end
+
 
 figure
 loglog(N_lst, error(:,1), 'DisplayName', 'Differentiation matrix')
