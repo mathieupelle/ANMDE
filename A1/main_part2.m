@@ -24,6 +24,7 @@ end
 
 %Scale cheby polys and create the legend
 leg = [""];
+leg_ch = [""];
 for i=1:N
     Tn(i,:) = cheby_scale(Che(i,:),i-1);
     leg(i) = ["$P^{(0,0)} (N= $" + num2str(i-1) + ")"];
@@ -181,11 +182,9 @@ ylabel('error')
 
 %% part l)
 
-
-
 N = 50;
-
-u1 = @(x) 1;
+syms x
+u1 = @(x) 0*x+1;
 u2 = @(x) sin(x);
 
 
@@ -193,9 +192,7 @@ L2_num1 = MatrixBasedInt(u1, 0, 2, N);
 L2_ana1 = 2;
 
 L2_num2 = MatrixBasedInt(u2, 0, 2, N);
-L2_ana2 = int(sin(x)^2, 0, 2);
-
-
+L2_ana2 = double(simplify(int(sin(x)^2, 0, 2)));
 
 
 %% F U N C T I O N S
@@ -246,12 +243,8 @@ function [L2] = MatrixBasedInt(fun, a, b, N)
     end
 
     M = (V'*V)^(-1); % Mass matrix
-    a = a;
-    b = b;
-    x = x + 1; % stupid way
-    f = fun(x)';
-    size(f)
-    size(M)
+    x = (b-a)/2.*x + (b+a)/2; % scaling
+    f = fun(x);
     L2 = f'*M*f; 
 
 end
