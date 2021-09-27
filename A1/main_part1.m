@@ -250,26 +250,28 @@ legend
 
 %% g)
 
-N_lst = [10,100,500,1000,5000,10000];
-N_lst = [10]
+N_lst = [10,100,500,1000,2500,5000,7500,10000];
+%N_lst = [10]
 error = zeros(length(N_lst),2);
 time = zeros(length(N_lst),2);
 v = @(x) exp(sin(pi*x));
 NST = false;
-fftw('dwisdom',[]);
+%fftw('dwisdom',[]);
 for n=1:length(N_lst)
     N = N_lst(n);
     N_step = 2/N;
     x = 0:N_step:2-N_step;
     
-    fftw('planner','measure');
-    fftinfo = fftw('dwisdom');
-    tic;
+%    fftw('planner','measure');
+%    fftinfo = fftw('dwisdom');
+    
+    
     k = [0:round(N/2-1), - round(N/2):-1];
+    tic;
     dvdx_fft = ifft(1i*k.*fft(v(x)))*pi;
     time(n,2) = toc;
     
-    tic; 
+     
     D = zeros(length(x),length(x));
     for i = 1:N
         for j = 1:N
@@ -283,8 +285,11 @@ for n=1:length(N_lst)
             D(i,i) = -sum(D(i,:));
         end
     end
+    tic;
     dvdx_fourier = D*v(x)'*pi;
     time(n,1) = toc; 
+
+
     dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
     error(n,1) = norm(abs(dvdx_fourier - dvdx_analytic'));
     error(n,2) = norm(abs(dvdx_fft - dvdx_analytic));
@@ -302,9 +307,9 @@ ylabel('error')
 legend
 
 figure
-plot(N_lst, time(:,1), 'DisplayName', 'Differentiation matrix')
+loglog(N_lst, time(:,1), 'DisplayName', 'Differentiation matrix')
 hold on
-plot(N_lst, time(:,2), 'DisplayName', 'FFT')
+loglog(N_lst, time(:,2), 'DisplayName', 'FFT')
 grid on
 xlabel('N')
 ylabel('CPU time')
