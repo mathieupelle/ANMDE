@@ -113,12 +113,12 @@ for i=1:N+1
     V(:,i) = JacobiP(x(i), 0, 0, N+1);
 end
 
-%x = linspace(-1, 1, 100);
+x = linspace(-1, 1, 100);
 
 h = zeros(N+1,length(x));
 for i=1:length(x)
     phi = JacobiP(x(i), 0, 0, N+1);
-    h(:,i) = (V')^(-1)*phi;
+    h(:,i) = (V)^(-1)*phi;
 end
 
 figure
@@ -129,22 +129,72 @@ end
 grid on
 xlabel('x')
 ylabel('$h_i$')
-%legend
+legend
 x = JacobiGL(0, 0, N);
-scatter(x, zeros(length(x)))
-
+scatter(x, zeros(length(x)), 'ko', 'HandleVisibility', 'off')
 
 %% part k)
 
-% N = 6;
-% x = JacobiGL(0, 0, N);
-% 
-% V = zeros(N+1, N+1);
-% for i=1:N+1
-%     V(:,i) = JacobiP(x(i), 0, 0, N+1);
-% end
+v = @(x) exp(sin(pi*x)); % x on [0,2]
 
-gradJacobiP(1, 0, 0, 3)
+N_lst = 2:1000:5000;
+error = zeros(length(N_lst), 1);
+for n=1:length(N_lst)
+    N = N_lst(n);
+    x = JacobiGL(0, 0, N); % Get the nodes (Gauss Lobato), using both endpoints (not idiot)
+
+    [V,Vx] = deal(zeros(N+1, N+1)); 
+    % Loop through each node, and evaluate Vandermonde and its derivative (not
+    % idiot, probably) (using Legendre polynomials)
+    for i=1:N+1
+        V(:,i) = JacobiP(x(i), 0, 0, N+1);
+        Vx(:,i) = gradJacobiP(x(i), 0, 0, N+1);
+    end
+
+    %Create differenciation matrix
+    D = Vx'*(V')^(-1);
+    %We have evaluated the Vandermome matrices from -1 to +1, and now we need
+    %to map those nodes to the domain of our function
+    x = x + 1;
+    x = x';
+    %Evaluate derivative
+    dvdx = D*v(x)';
+    dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
+    error(n, 1) = norm(dvdx - dvdx_analytic');
+
+    if n == length(N_lst)
+        figure
+        plot(x,dvdx)
+        hold on
+        plot(x,dvdx_analytic, 'x')
+        grid on
+    end
+end
+
+figure('Name', 'Error')
+loglog(N_lst, error)
+grid on
+xlabel('N')
+ylabel('error')
+
+
+
+%% part l)
+
+
+
+N = 50;
+
+u1 = @(x) 1;
+u2 = @(x) sin(x);
+
+
+L2_num1 = MatrixBasedInt(u1, 0, 2, N);
+L2_ana1 = 2;
+
+L2_num2 = MatrixBasedInt(u2, 0, 2, N);
+L2_ana2 = int(sin(x)^2, 0, 2);
+
 
 
 
@@ -173,17 +223,35 @@ end
 function [dPdx] = gradJacobiP(x, alpha, beta, N)
     
     dPdx = zeros(N, 1);
-    P = JacobiP(x, alpha+1, beta+1, N);
+    P = JacobiP(x, alpha+1, beta+1, N-1);
     for i=1:N
         n = i-1;
         if i == 1
             dPdx(i,1) = 0;
         else
             dPdx(i,1) = sqrt(n*(n+alpha+beta+1))*P(i-1,1);
+            dPdx(i,1) = 0.5*(alpha+beta+1+n)*P(i-1,1);
         end
     end
     
 end
 
+function [L2] = MatrixBasedInt(fun, a, b, N)
 
+    x = JacobiGL(0, 0, N); % Get the nodes (Gauss Lobato), using both endpoints (not idiot)
+    V = zeros(N+1, N+1); 
 
+    for i=1:N+1
+        V(:,i) = JacobiP(x(i), 0, 0, N+1);
+    end
+
+    M = (V'*V)^(-1); % Mass matrix
+    a = a;
+    b = b;
+    x = x + 1; % stupid way
+    f = fun(x)';
+    size(f)
+    size(M)
+    L2 = f'*M*f; 
+
+end
