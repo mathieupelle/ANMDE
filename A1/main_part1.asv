@@ -162,8 +162,7 @@ for n=1:length(N_lst)
     end
 
 end
-plot(x, dvdx_analytic, '--k', 'DisplayName', 'Analytic')
-saveas(gcf,'figures/e_derivative.eps','epsc')
+
 % Do the same with NST
 NST = true;
 for n=1:length(N_lst)
@@ -180,6 +179,7 @@ for n=1:length(N_lst)
 end
 
 
+plot(x, dvdx_analytic, '--k', 'DisplayName', 'Analytic')
 
 %Get convergence error
 p = polyfit(log(N_lst), log(error(:,1)), 1);
@@ -189,17 +189,14 @@ figure('Name','(e)-Convergence using the fourier differenciation matrix')
 loglog(N_lst, error(:,1), '-o'); hold on
 loglog(N_lst, error(:,2), '-x')
 legend('No NST','NST applied')
-grid on; box on;
+grid on
 xlabel('N')
 ylabel('$||dv/dx - D v_N||_2$')
-saveas(gcf,'figures/e_convergence.eps','epsc')
 
 figure('Name','(e) - NST results')
-loglog(N_lst,abs(error(:,1)-error(:,2)))
-grid on; box on;
+loglog(N_lst,abs(error(:,1)-error(:,2))
 xlabel('N')
 ylabel('Error comparison')
-saveas(gcf,'figures/e_NST.eps','epsc')
 
 %% f) 
 
