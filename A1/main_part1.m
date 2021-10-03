@@ -1,3 +1,10 @@
+% 02689 - Advanced Numerical Methods for Differential Equations
+% Technical University of Denmark 
+% 03/10/2021
+% Assignment 1 - Spectral methods
+% P.P.K. Kashyap, M.N.X.Y. Pellé, G. Vergés i Plaza
+% Part 1: Fourier Spectral Methods
+%%
 clear all
 close all
 clc
@@ -10,8 +17,9 @@ set(0, 'DefaultLineLineWidth', 1);
 set(0, 'DefaultFigureRenderer', 'painters');
 set(0,'DefaultFigureWindowStyle','docked')
 
-%% a)
+%% a) Continuous Fourier coefficients
 
+% Domain range
 x_min = 0;
 x_max = 2;
 
@@ -24,14 +32,16 @@ N_lst = -N_max:N_max;
 cn_val = zeros(length(N_lst), 1);
 for j = 1:length(N_lst)
     %cn_val(j, 1) = double(subs(cn, n, N_lst(j)));
-    cn_val(j,1) = (2-sqrt(3))^abs(N_lst(j))/sqrt(3);
+    cn_val(j,1) = (2-sqrt(3))^abs(N_lst(j))/sqrt(3); %Analytical expression for coefficients
 end
 
+% Fitting decay curve 
 N_lst_pos = N_lst(floor(N_max+1):end);
 cn_val_pos = cn_val(floor(N_max+1):end);
 p = polyfit(N_lst_pos, log(cn_val_pos), 1);
-decay = p(1);
+decay = p(1); % Decay rate
 
+% Decay plot
 figure
 semilogy(N_lst_pos, cn_val_pos,'k')
 hold on
@@ -41,27 +51,28 @@ xlabel('n')
 ylabel('$c_n$')
 
 
+%Verifying function approximation
 x_val = linspace(x_min, x_max, 100);
-
 figure;
 y_analytic = double(subs(f, x, x_val))';
 plot(x_val, y_analytic, '--k')
 
+
+% Convergence study
 N = 1:35;
 y = zeros(length(x_val), length(N));
 error = zeros(length(N),1);
-for n=1:length(N)
+for n=1:length(N) %loop over number of coefficients
     N_lst = -N(n):N(n);
     coef = cn_val(N_max-n-1:N_max+n-1);
-    for j=1:length(x_val)
+    for j=1:length(x_val) %loop over number of x positions
         yt = 0;
-        for k=1:length(N_lst)
-            yt = yt + coef(k)*exp(1i*N_lst(k)*x_val(j)*pi); 
+        for k=1:length(N_lst) %loop over wave numbers
+            yt = yt + coef(k)*exp(1i*N_lst(k)*x_val(j)*pi); %sum over wave numbers
         end
         y(j,n) = yt;   
     end
-    error(n,1) = sqrt(trapz(x_val,(y_analytic - abs(y(:,n))).^2));
-    %error(n,1) = norm(y_analytic - abs(y(:,n)));
+    error(n,1) = sqrt(trapz(x_val,(y_analytic - abs(y(:,n))).^2)); %L2 norm
     plot(x_val, abs(y(:,n)), 'DisplayName', sprintf('N = %d', N(n)));
     hold on
 end
@@ -78,29 +89,37 @@ ylabel('Error')
 grid on
 
 
-%% b)
+%% b) Discrete Fourier coefficients
 
-N_lst = 2.^(2:1:6);
-f = @(x) 1./(2-cos(pi*x));
+% Domain range
+x_min = 0;
+x_max = 2;
 
+N_lst = 2.^(2:1:6); % Order
+N_lst = [50,100,500,1000,5000];
+f = @(x) 1./(2-cos(pi*x)); % Function
+error = zeros(length(N_lst),1);
 figure;
-for j=1:length(N_lst)
+for j=1:length(N_lst) %loop over number of max. order
     N = N_lst(j);
     x = linspace(x_min, x_max, N);
     u = f(x);
-    cn = fft(u)/N;
-    cn = fftshift(cn);
+    cn = fft(u)/N; % Discrete Fourier coefs.
+    cn = fftshift(cn); % Re-order accordingly
     n = -N/2:1:N/2-1;
     Pn = zeros(N,1);
-    for g=1:N
+    for g=1:N %loop over x locations
         pt = 0;
-        for k=1:length(n)
-            pt = pt + cn(k)*exp(1i*n(k)*x(g)*pi); 
+        for k=1:length(n) % loop over wave numbers
+            pt = pt + cn(k)*exp(1i*n(k)*x(g)*pi); %sum
         end
         Pn(g,1) = pt;   
     end
     plot(x, abs(Pn), 'DisplayName', sprintf('N = %d', N));
     hold on;
+    e = f(x) - real(Pn(g,1));
+    error(j,1) = sqrt(trapz(x, e.^2));
+    %error(j,1) = max(abs(e));
 end
 
 x_analytic = linspace(x_min, x_max, 100);
@@ -110,8 +129,16 @@ xlabel('x')
 ylabel('$\mathcal{P}_N$')
 legend;
 
-%% c)
+figure
+loglog(N_lst, error, '-x')
+grid on
+xlabel('N')
+ylabel('$||v(x) - \mathcal{P}_Nv(x)||_{L^2}$')
 
+
+%% c) Lagrange polynomials from closed-form expression
+
+% First 6 polynomials
 N = 6;
 j_lst = 0:N-1;
 x = linspace(0, 2*pi, 50);
@@ -121,7 +148,7 @@ figure;
 for j=1:length(j_lst)
     xj = 2*pi/N*j_lst(j);
     for i=1:length(x)
-        h(j,i) = 1/N*sin(N/2*(x(i)-xj))*cot(0.5*(x(i)-xj));
+        h(j,i) = 1/N*sin(N/2*(x(i)-xj))*cot(0.5*(x(i)-xj)); %closed-form expression
     end
     plot(x, h(j,:), 'DisplayName', sprintf('$h_%d$', j));
     hold on
@@ -131,7 +158,7 @@ xlabel('x')
 ylabel('$h_j$')
 legend
 
-%% d) e) Computaation of the Fourier differentiation matrix
+%% d) e) Computation of the Fourier differentiation matrix
 
 N_lst = 2:2:50; %Create array of elements to be analysed
 
