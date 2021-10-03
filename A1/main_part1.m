@@ -128,7 +128,7 @@ xlabel('x')
 ylabel('$h_j$')
 legend
 
-%% d) Computaation of the Fourier differentiation matrix
+%% d) e) Computaation of the Fourier differentiation matrix
 
 N_lst = 2:2:50; %Create array of elements to be analysed
 
@@ -150,7 +150,7 @@ for n=1:length(N_lst)
     dvdx_fourier = D*v(x)'*pi;
     dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
     %Calculate analytical derivative and compare
-    error(n,1) = norm(dvdx_fourier - dvdx_analytic');
+    error(n,1) = sqrt(trapz(x,(dvdx_fourier - dvdx_analytic').^2));
     
     if N == 4 || N == 8 || N == 16 || N == 32
         plot(x, dvdx_fourier, 'DisplayName', sprintf('N = %d', N_lst(n)))
@@ -176,7 +176,7 @@ for n=1:length(N_lst)
     dvdx_fourier = D*v(x)'*pi;
     dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
     %Calculate analytical derivative and compare
-    error(n,2) = norm(dvdx_fourier - dvdx_analytic');
+    error(n,2) = sqrt(trapz(x,(dvdx_fourier - dvdx_analytic').^2));
 end
 
 
@@ -191,7 +191,7 @@ loglog(N_lst, error(:,2), '-x')
 legend('No NST','NST applied')
 grid on; box on;
 xlabel('N')
-ylabel('$||dv/dx - D v_N||_2$')
+ylabel('$||dv/dx - D v_N||_{L^2}$')
 saveas(gcf,'figures/e_convergence.eps','epsc')
 
 figure('Name','(e) - NST results')
@@ -203,42 +203,33 @@ saveas(gcf,'figures/e_NST.eps','epsc')
 
 %% f) 
 
-syms x 
 
+%Define all the functions and its derivatives analytically
+syms x 
 w0_l = -cos(pi*x);
 w0_r = cos(pi*x);
 w1_l = int(w0_l, x);
 w1_r = int(w0_r, x);
-w2_l = int(w1_l, x);
-w2_r = int(w1_r, x)+2/pi^2;
+w2_l = int(w1_l, x)-1/pi^2;
+w2_r = int(w1_r, x)+1/pi^2;
 w3_l = int(w2_l, x);
 w3_r = int(w2_r, x);
 w = [w0_l, w0_r; w1_l, w1_r; w2_l, w2_r; w3_l, w3_r];
 
 
 NST = true;
-N_lst = 4:10:100;
+N_lst = [2^2,2^3,2^4,2^5,2^6,2^7];
 error = zeros(length(w)-1,length(N_lst));
-figure
+figure('Name','f - Differentiation results with smoothness')
 for n=1:length(N_lst)
     N = N_lst(n);
     N_step = 4/N;
     x = -2:N_step:2-N_step;
-    D = zeros(length(x),length(x));
+    %For each function, compute the derivative using D
     for f=1:length(w)-1
-        for i = 1:N
-            for j = 1:N
-                if i == j
-                    D(i,j) = 0;
-                else        
-                    D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
-                end
-            end
-            if NST
-                D(i,i) = -sum(D(i,:));
-            end
-        end
+        D = get_FourierDiffMatrix(N,NST);
         
+        %Divide between right and left part
         wl_l = matlabFunction(w(f,1));
         wl_r = matlabFunction(w(f,2));
         wu_l = matlabFunction(w(f+1,1));
@@ -246,94 +237,112 @@ for n=1:length(N_lst)
         u = [wu_l(x(x<0)), wu_r(x(x>=0))];
         dwdx_fourier = D*u'*pi/2;
         dwdx_analytic = [wl_l(x(x<0)), wl_r(x(x>=0))];
-        error(f,n) = norm(dwdx_fourier' - dwdx_analytic);
+        %error(f,n) = norm(dwdx_fourier' - dwdx_analytic);
+        error(f,n) = sqrt(trapz(x,(dwdx_fourier' - dwdx_analytic).^2));
+        %error(f,n) = L2norm(abs(dwdx_fourier - dwdx_analytic'), x);
         if n == length(N_lst)
+            subplot(3,1,f)
             plot(x, dwdx_analytic, 'DisplayName', sprintf('$w_{%d}$', f-1));
-            hold on
+            hold on; grid on; box on;
             plot(x, dwdx_fourier, 'DisplayName', sprintf('$v_{%d}$', f-1));
+            legend('Location','best')
+            ylabel('$w_i$')
+            if f == 3
+                ylim([-0.2,0.5])
+            end
         end
     end
 end
 plot(x, u, 'DisplayName', sprintf('$w_{%d}$', f));
 grid on
-legend
 xlabel('x')
-ylabel('$w_i$')
+saveas(gcf,'figures/f_Derivatives.eps','epsc')
 
-figure
-loglog(N_lst, error(1,:), 'DisplayName', sprintf('$w_{%d}$', 0));
+
+%Find order of convergence
+ord = zeros(3,2);
+for i=1:3
+    ord(i,:) = polyfit(log10(N_lst),log10(error(i,:)),1);
+end
+
+figure('Name','f-Convergence of the different functions')
+loglog(N_lst, error(1,:)/error(1,1),'-x' ,'DisplayName', [sprintf('$w_{%d}$', 0) + ": $O($"+num2str(round(ord(1,1),1))+"$)$"]);
 hold on
-loglog(N_lst, error(2,:), 'DisplayName', sprintf('$w_{%d}$', 1));
-loglog(N_lst, error(3,:), 'DisplayName', sprintf('$w_{%d}$', 2));
+loglog(N_lst, error(2,:)/error(2,1), '-x','DisplayName', [sprintf('$w_{%d}$', 1)+ ": $O($"+num2str(round(ord(2,1),1))+"$)$"]);
+loglog(N_lst, error(3,:)/error(3,1),'-x' ,'DisplayName', [sprintf('$w_{%d}$', 2)+ ": $O($"+num2str(round(ord(3,1),1))+"$)$"]);
 grid on
 xlabel('N')
-ylabel('error')
-legend
+ylabel('$||w_i - D w_{i+1,N}||_{L^2}$')
+legend('Location','best')
+saveas(gcf,'figures/f_Convergence.eps','epsc')
 
 
 %% g)
 
-N_lst = [10,100,500,1000,2500,5000,7500,10000];
+N_lst = [4,8,16,32,64,100,260,500,1000,2600,5000,10000];
+%N_lst = 4:2:200;
 %N_lst = [10]
 error = zeros(length(N_lst),2);
 time = zeros(length(N_lst),2);
 v = @(x) exp(sin(pi*x));
-NST = false;
-%fftw('dwisdom',[]);
+NST = true;
+% fftw('dwisdom',[]);
+% fftw('planner','measure');
+% X = rand(500,1);
+% tic; fft(X); toc;
+% fftinfo = fftw('dwisdom');
+% fftw('dwisdom',fftinfo);
 for n=1:length(N_lst)
     N = N_lst(n);
     N_step = 2/N;
     x = 0:N_step:2-N_step;
     
-%    fftw('planner','measure');
-%    fftinfo = fftw('dwisdom');
+   
     
     
     k = [0:round(N/2-1), - round(N/2):-1];
     tic;
-    dvdx_fft = ifft(1i*k.*fft(v(x)))*pi;
+    dvdx_fft = ifft(1i*k.*fft(v(x)),'symmetric')*pi;
     time(n,2) = toc;
     
      
-    D = zeros(length(x),length(x));
-    for i = 1:N
-        for j = 1:N
-            if i == j
-                D(i,j) = 0;
-            else        
-                D(i,j) = 0.5*(-1)^(i-j)*cot(pi/N*(i-j));
-            end
-        end
-        if NST
-            D(i,i) = -sum(D(i,:));
-        end
-    end
+    D = get_FourierDiffMatrix(N,NST);
+    
     tic;
     dvdx_fourier = D*v(x)'*pi;
     time(n,1) = toc; 
 
 
     dvdx_analytic = pi*cos(pi*x).*exp(sin(pi*x));
-    error(n,1) = norm(abs(dvdx_fourier - dvdx_analytic'));
-    error(n,2) = norm(abs(dvdx_fft - dvdx_analytic));
+    error(n,1) = sqrt(trapz(x,(dvdx_fourier - dvdx_analytic').^2));
+    %error(n,2) = sqrt(trapz(x,(real(dvdx_fft) - dvdx_analytic).^2));
+    error(n,2) = sqrt(trapz(x,((dvdx_fft) - dvdx_analytic).^2));
 
 end
 
 
-figure
-loglog(N_lst, error(:,1), 'DisplayName', 'Differentiation matrix')
+figure('Name','g-Differentiation matrix vs FFT convergence')
+loglog(N_lst, error(:,1),'-x', 'DisplayName', 'Differentiation matrix')
 hold on
-loglog(N_lst, error(:,2), 'DisplayName', 'FFT')
+loglog(N_lst, error(:,2),'-x', 'DisplayName', 'FFT')
 grid on
 xlabel('N')
-ylabel('error')
+ylabel('$||e||_{L^2}$')
 legend
+saveas(gcf,'figures/g_convergence.eps','epsc')
 
-figure
-loglog(N_lst, time(:,1), 'DisplayName', 'Differentiation matrix')
+
+%N vector for plotting convergence
+N_con = 1000:50:10000;
+
+figure('Name','g-Differentiation matrix vs FFT cpu time')
+loglog(N_lst, time(:,1)*1000,'-x', 'DisplayName', 'Differentiation matrix')
 hold on
-loglog(N_lst, time(:,2), 'DisplayName', 'FFT')
+loglog(N_lst, time(:,2)*1000,'-x', 'DisplayName', 'FFT')
+loglog(N_con,(N_con.^2)*time(1,1)*1000/(N_con(1)^2),'--','Color','k','DisplayName','$N^2$')
+loglog(N_con,N.*log10(N_con)*time(1,2)^1.4*1000/(N_con(1)*log10(N_con(1))),'-.','Color','k','DisplayName','$N \log N$')
 grid on
 xlabel('N')
-ylabel('CPU time')
-legend
+%ylabel('CPU time [ms]')
+legend('Location','best')
+saveas(gcf,'figures/g_time.eps','epsc')
