@@ -60,7 +60,8 @@ for n=1:length(N)
         end
         y(j,n) = yt;   
     end
-    error(n,1) = norm(y_analytic - abs(y(:,n)));
+    error(n,1) = sqrt(trapz(x_val,(y_analytic - abs(y(:,n))).^2));
+    %error(n,1) = norm(y_analytic - abs(y(:,n)));
     plot(x_val, abs(y(:,n)), 'DisplayName', sprintf('N = %d', N(n)));
     hold on
 end
@@ -73,7 +74,7 @@ figure;
 loglog(N, error,'-o');
 grid 
 xlabel('N')
-ylabel('error')
+ylabel('Error')
 grid on
 
 
@@ -105,6 +106,8 @@ end
 x_analytic = linspace(x_min, x_max, 100);
 plot(x_analytic, f(x_analytic), '--k', 'DisplayName', 'Analytical');
 grid on;
+xlabel('x')
+ylabel('$\mathcal{P}_N$')
 legend;
 
 %% c)
