@@ -117,7 +117,7 @@ for j=1:length(N_lst) %loop over number of max. order
     end
     plot(x, abs(Pn), 'DisplayName', sprintf('N = %d', N));
     hold on;
-    e = f(x) - real(Pn(g,1));
+    e = f(x) - real(Pn(:,1)');
     error(j,1) = sqrt(trapz(x, e.^2));
     %error(j,1) = max(abs(e));
 end
