@@ -43,12 +43,13 @@ decay = p(1); % Decay rate
 
 % Decay plot
 figure
-semilogy(N_lst_pos, cn_val_pos,'k')
+semilogy(N_lst_pos, cn_val_pos,'-ok')
 hold on
-semilogy(N_lst_pos, exp(p(2))*exp(p(1)*N_lst_pos))
+%plot(N_lst_pos, exp(p(2))*exp(p(1)*N_lst_pos))
 grid on
 xlabel('n')
 ylabel('$c_n$')
+legend(append('Decay rate = ',num2str(-decay)))
 
 
 %Verifying function approximation
@@ -96,7 +97,7 @@ x_min = 0;
 x_max = 2;
 
 N_lst = 2.^(2:1:6); % Order
-N_lst = [50,100,500,1000,5000];
+%N_lst = [N_lst, 1000, 5000, 10000];
 f = @(x) 1./(2-cos(pi*x)); % Function
 error = zeros(length(N_lst),1);
 figure;
