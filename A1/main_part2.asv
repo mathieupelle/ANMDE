@@ -17,12 +17,11 @@ set(0, 'DefaultLineLineWidth', 1);
 set(0, 'DefaultFigureRenderer', 'painters');
 set(0,'DefaultFigureWindowStyle','docked')
 
-%% h) Jacobi polynomials and verification with Chebyshev and Legendre polynomials
+%% Part h)
 
 N = 6;
 X = -1:0.01:1;
 
-%Evaluating Jacobi polynomials with corresponding alpha, beta and order
 [Leg,Che,Tn] = deal(zeros(N,length(X)));
 for x=1:length(X)
     Leg(:,x) = JacobiP(X(x),0,0,N)';
@@ -51,7 +50,7 @@ xlabel('x')
 legend(leg_ch,'Location','bestoutside'	)
 grid on; box on;
 
-%% i) DTM up to first 200 coefficients
+%% Part i)
 
 % Function to interpolate
 u = @(x) 1./(2-cos(pi*x)); % x on [0,2]
@@ -134,27 +133,24 @@ grid on
 xlabel('N')
 ylabel('Error, $\| u(x)-\mathcal{P}_Nu(x)  \|_{L2}$ ')
 
-%% j) Lagrange polynomials from Vandermonde matrix (Modal to nodal)
+%% part j)
 
-% 5+1 nodes for first 6 polynomials
 N = 5;
 x = JacobiGL(0, 0, N);
 
-% Building Vondermonde matrix
 V = zeros(N+1, N+1);
 for i=1:N+1
     V(:,i) = JacobiP(x(i), 0, 0, N+1);
 end
 
-% Solve system by inverting matrix and computing modal values at nodes
 x = linspace(-1, 1, 100);
+
 h = zeros(N+1,length(x));
 for i=1:length(x)
     phi = JacobiP(x(i), 0, 0, N+1);
     h(:,i) = (V)^(-1)*phi;
 end
 
-% First 6 Lagrange polynomials
 figure
 for i=1:N
     plot(x, h(i,:), 'DisplayName', sprintf('$h_{%d}$', i-1))
@@ -167,7 +163,7 @@ legend('Location','EastOutside')
 x = JacobiGL(0, 0, N);
 scatter(x, zeros(length(x)), 'ko', 'HandleVisibility', 'off')
 
-%% k) Differentiation from Vandermonde matrix
+%% part k)
 
 % Function to differentiate
 v = @(x) exp(sin(pi*x)); % x on [0,2]
@@ -213,7 +209,6 @@ xlabel('x')
 ylabel('$\frac{dv}{dx}$', 'FontSize', 18)
 legend('Location', 'Best')
 
-% Convergence study
 figure('Name', 'Error')
 loglog(N_lst, error, '-x')
 grid on
@@ -230,14 +225,13 @@ u3 = @(x) x.^2;
 u4 = @(x) x.^3;
 u5 = @(x) sin(x);
 
-%Analytical integration
+%Analytica
 L2_ana1 = sqrt(double(simplify(int(0*x+1, 0, 2))));
 L2_ana2 = sqrt(double(simplify(int(x^2, 0, 2))));
 L2_ana3 = sqrt(double(simplify(int(x^4, 0, 2))));
 L2_ana4 = sqrt(double(simplify(int(x^6, 0, 2))));
 L2_ana5 = sqrt(double(simplify(int(sin(x)^2, 0, 2))));
 
-%Matrix based integration for various number of points
 N = 1:1:5;
 L2_num = zeros(length(N),2);
 for n=1:length(N)
@@ -248,8 +242,6 @@ for n=1:length(N)
     L2_num(n,5) = MatrixBasedInt(u5, 0, 2, N(n));
 end
 
-
-% Convergence study
 figure
 plot(N, abs(L2_num(:,1)-L2_ana1), '-o')
 hold on 
@@ -262,6 +254,7 @@ xlabel('N')
 ylabel('Error, $|\sqrt{\mathbf{f^T}\mathcal{M}\mathbf{f}}- \| u(x)  \|_{L2}|$')
 legend('$u(x)=1$', '$u(x)=x$', '$u(x)=x^2$', '$u(x)=x^3$','$u(x)=sin(x)$')
 
+% up to polynomial in basis
 %% F U N C T I O N S
 
 function [L2] = MatrixBasedInt(fun, a, b, N)
