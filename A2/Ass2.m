@@ -1,5 +1,6 @@
 %% Advanced Numerical Methods for Differential Equations - Assignment 2
 clear variables; close all; clc; beep off;
+set(0,'DefaultFigureWindowStyle','docked')
 %% Question (a) - Legendre Tau Method (LTM)
 
 %Input: 
@@ -89,27 +90,26 @@ plot(X,u_ana)
 %%  Question (b) - Irrotational flow around a cylinder 
 
 %Number of points
-Ni = 2^3; 
+Ni = 35;  %even for odd N+1
 
 % Create coordinates array
 r1 = 1; 
 a = 3;
 r2 = a*r1;
-r = linspace(r1,r2,Ni+1);
-%theta = 0:2*pi/(Ni+1):(2*pi);
+
 N_step = 2*pi/(Ni+1);
 theta = 0:N_step:2*pi-N_step;
-%theta = theta(1:end-1);
+
+%Create differentation matrices
+% For radial:
+x_basis = JacobiGL(0, 0, Ni); % Get the nodes (Gauss Lobato), using both endpoints (not idiot)
+r = x_basis*(r2-r1)/2+(r2+r1)/2;
 
 %Create meshgrid
 [R,TH] = meshgrid(r,theta);
 
 %Vectorize mesghrid
 R = R(:); TH = TH(:);
-
-%Create differentation matrices
-% For radial:
-x_basis = JacobiGL(0, 0, Ni); % Get the nodes (Gauss Lobato), using both endpoints (not idiot)
 
 [V,Vx] = deal(zeros(Ni+1, Ni+1));
 % Loop through each node, and evaluate Vandermonde and its derivative (not
@@ -159,9 +159,14 @@ u = L\f;
 u_reshaped = reshape(u(:),Ni+1,Ni+1);
 
 %Compute the error
-[R,TH] = meshgrid(r,theta);
+[R,TH] = meshgrid(r,[theta, 2*pi]);
+
+u_reshaped = vertcat(u_reshaped, u_reshaped(1,1:Ni+1));
 u_th = V_inf*(R+r1^2*R.^-1).*cos(TH);
-err = abs((u_reshaped-u_th)./u_th);
+err = abs((u_reshaped-u_th));
+
+error = (u_reshaped-u_th).^2;
+L2 = sqrt(trapz(theta,trapz(r,error(1:end-1,:))));
 
 %Plotting
 figure('Name','Error in logscale')
