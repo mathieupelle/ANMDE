@@ -90,7 +90,7 @@ plot(X,u_ana)
 %%  Question (b) - Irrotational flow around a cylinder 
 
 %Number of points
-Ni = 35;  %even for odd N+1
+Ni = 35;  %odd for even N+1
 
 % Create coordinates array
 r1 = 1; 
@@ -122,8 +122,6 @@ end
 %Create differenciation matrix
 Dr = Vx'*(V')^(-1);
 Dr = Dr*(2/(r1*(a-1)))^-1;
-%Dr(1,:) = [1,zeros(1,Ni)];
-%Dr(end,:) = [zeros(1,Ni),1];
 
 %Get differentation matrix with Fourier basis
 Dth = get_FourierDiffMatrix(Ni+1,false);
@@ -131,8 +129,6 @@ Dthth = Dth*Dth;
 
 %Create them in 2D
 I = eye(Ni+1);
-%DR = kron(I,Dr); 
-%DTT = kron(Dthth,I);
 DR = kron(Dr,I); 
 DTT = kron(I,Dthth);
 
@@ -149,10 +145,6 @@ f(end-(Ni):end) = V_inf*(r2+r1^2/r2)*cos(theta);
 %Modify differentiation operand
 L(1:Ni+1,1:Ni+1) = eye(Ni+1); L(1:Ni+1,Ni+2:end) = 0;
 L(end-Ni:end,end-Ni:end) = eye(Ni+1); L(end-Ni:end,1:end-Ni-1) = 0;
-%L(1:Ni+1,1) = 1; L(Ni+2:end,1) = 0;
-%L(end-Ni:end,end) = 1; L(1:end-Ni-1,end) = 0;
-%f(1:Ni+1:end) = 1;
-%f(Ni+1:Ni+1:end) = 1;
 
 %Solve the system
 u = L\f;
@@ -182,8 +174,47 @@ subplot(122)
 contourf(R.*cos(TH),R.*sin(TH),u_th);
 colorbar
 
+%%
 
 
 
+Ni = 49;
+
+c = 10;
+x0 = 0;
+
+dt = 0.001;
+time = 0:dt:dt*100;
+
+x_end = pi;
+x_start = -pi;
+dx = (x_end-x_start)/(Ni+1);
+x = x_start:dx:x_end-dx; %remove end point?
+%x = linspace(x_start, x_end, Ni+1);
+
+D = get_FourierDiffMatrix(Ni+1,false)/2;
+D3 = D*D*D;
 
 
+u_init = 0.5*c*sech(0.5*sqrt(c).*(x-c*time(1)-x0)).^2;
+u = u_init';
+
+u_hist = zeros(length(x),length(time));
+u_hist(:,1) = u_init;
+for t=1:length(time)-1
+    K1 = -6*u'*D*u - D3*u;
+    K2 = -6*(u'+dt*K1/2)*D*(u+dt*K1/2) - D3*(u+dt*K1/2);
+    K3 = -6*(u'+dt*K2/2)*D*(u+dt*K2/2) - D3*(u+dt*K2/2);
+    K4 = -6*(u'+dt*K3/2)*D*(u+dt*K3/2) - D3*(u+dt*K3/2);
+    
+    u_hist(:,t+1) = u_hist(:,t) + dt/6*(K1+2*K2+2*K3+K4);
+
+end
+
+[X,T] = meshgrid(x,time);
+figure('Name', 'Spectral method')
+surf(X,T,u_hist')
+
+f = 0.5*c*sech(0.5*sqrt(c).*(X-c*T-x0)).^2;
+figure('Name', 'Soliton')
+surf(X,T,f)
