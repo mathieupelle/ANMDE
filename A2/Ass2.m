@@ -1,5 +1,12 @@
 %% Advanced Numerical Methods for Differential Equations - Assignment 2
 clear variables; close all; clc; beep off;
+
+set(0,'defaulttextInterpreter','latex'); 
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
+set(groot, 'defaultLegendInterpreter','latex');
+set(0,'defaultAxesFontSize',12);
+set(0, 'DefaultLineLineWidth', 1);
+set(0, 'DefaultFigureRenderer', 'painters');
 set(0,'DefaultFigureWindowStyle','docked')
 %% Question (a) - Legendre Tau Method (LTM)
 
@@ -174,47 +181,87 @@ subplot(122)
 contourf(R.*cos(TH),R.*sin(TH),u_th);
 colorbar
 
-%%
+%%  Question (c) - Solving the KdV equation
 
-
-
-Ni = 49;
-
+Ni = 95;
 c = 10;
 x0 = 0;
-
-dt = 0.001;
-time = 0:dt:dt*100;
 
 x_end = pi;
 x_start = -pi;
 dx = (x_end-x_start)/(Ni+1);
-x = x_start:dx:x_end-dx; %remove end point?
-%x = linspace(x_start, x_end, Ni+1);
+x = x_start:dx:x_end-dx;
 
-D = get_FourierDiffMatrix(Ni+1,false)/2;
-D3 = D*D*D;
+u_init = 0.5*c*sech(0.5*sqrt(c).*(x-c*0-x0)).^2;
+dt = 2.82/(3*(Ni+1)*max(abs(u_init))+(Ni+1)^3/8);
+time = 0:dt:dt*1000;
 
-
-u_init = 0.5*c*sech(0.5*sqrt(c).*(x-c*time(1)-x0)).^2;
 u = u_init';
 
 u_hist = zeros(length(x),length(time));
 u_hist(:,1) = u_init;
-for t=1:length(time)-1
-    K1 = -6*u'*D*u - D3*u;
-    K2 = -6*(u'+dt*K1/2)*D*(u+dt*K1/2) - D3*(u+dt*K1/2);
-    K3 = -6*(u'+dt*K2/2)*D*(u+dt*K2/2) - D3*(u+dt*K2/2);
-    K4 = -6*(u'+dt*K3/2)*D*(u+dt*K3/2) - D3*(u+dt*K3/2);
-    
-    u_hist(:,t+1) = u_hist(:,t) + dt/6*(K1+2*K2+2*K3+K4);
 
+u_ana = zeros(length(x),length(time));
+u_ana(:,1) = u_init;
+L2norm = zeros(length(time),1);
+L2norm(1) = sqrt(trapz((u_hist(:,1) - u_ana(:,1)).^2, x));
+
+% D = get_FourierDiffMatrix(Ni+1,false)/2;
+% D3 = D*D*D;
+for t=1:length(time)-1
+    
+    % Diff. matrix
+%     K1 = -6*u'*D*u - D3*u;
+%     K2 = -6*(u'+dt*K1/2)*D*(u+dt*K1/2) - D3*(u+dt*K1/2);
+%     K3 = -6*(u'+dt*K2/2)*D*(u+dt*K2/2) - D3*(u+dt*K2/2);
+%     K4 = -6*(u'+dt*K3/2)*D*(u+dt*K3/2) - D3*(u+dt*K3/2);
+    
+    
+    %FFT
+    K1 = KdV(u);
+    K2 = KdV(u+dt*K1/2);
+    K3 = KdV(u+dt*K2/2);
+    K4 = KdV(u+dt*K3);
+    u = u_hist(:,t) + dt/6*(K1+2*K2+2*K3+K4);
+    u_hist(:,t+1) = u;
+    u_ana(:,t+1) = 0.5*c*sech(0.5*sqrt(c).*(x-c*time(t+1)-x0)).^2;
+    
+    L2norm(t+1) = sqrt(trapz((u - u_ana(:,t+1)).^2, x));
+    
 end
 
 [X,T] = meshgrid(x,time);
-figure('Name', 'Spectral method')
-surf(X,T,u_hist')
+% figure('Name', 'Spectral method')
+% surf(X,T,u_hist')
+% xlabel('x')
+% ylabel('t')
+% zlabel('$\overline{u}(x,t)$')
+% 
+% 
+% figure('Name', 'Soliton')
+% surf(X,T,u_ana')
+% xlabel('x')
+% ylabel('t')
+% zlabel('u(x,t)')
 
-f = 0.5*c*sech(0.5*sqrt(c).*(X-c*T-x0)).^2;
-figure('Name', 'Soliton')
-surf(X,T,f)
+figure('Name', 'Absolute error')
+surf(X,T,abs(u_ana'-u_hist'))
+xlabel('x')
+ylabel('t')
+zlabel('$|\overline{u}(x,t) - u(x,t)|$')
+
+figure('Name', 'L2 norm in time')
+plot(time, L2norm)
+xlabel('Time')
+ylabel('L2')
+grid on
+
+figure('Name', 'L2 norm in time')
+plot(x, u_ana(:,end))
+hold on
+plot(x, u_hist(:,end))
+xlabel('Time')
+ylabel('L2')
+grid on
+
+%%
