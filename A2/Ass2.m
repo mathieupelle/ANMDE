@@ -385,6 +385,16 @@ x0_arr = [-40, -15];
 
 %%
 
+[X,T] = meshgrid(x,time(1:900:end));
+figure('Name', 'Spectral method')
+surf(X,T,u_hist(:,1:900:end)')
+xlabel('x')
+ylabel('t')
+zlabel('$\overline{u}(x,t)$')
+
+
+%%
+
 figure
 hold on
 for i = 1:500:length(time)
