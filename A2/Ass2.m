@@ -328,28 +328,69 @@ end
 saving_hist = 1;
 conservation = 0;
 
-Ni = 31;
-c = 5;
-x0 = 0;
+Ni_lst = 3:4:51;
+%col = {'r', 'g', 'k', 'b', 'm'};
+figure
+for i=1:length(Ni_lst)
+    
+    Ni = Ni_lst(i);
+    c = 5;
+    x0 = 0;
 
-[u_hist, u_ana, ~, ~, time, ~] = RK4_KdV(Ni, c, x0, saving_hist, conservation);
+    [u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, saving_hist, conservation);
 
-cn = fft(u_hist)/(Ni+1);
-cn = fftshift(cn); % Re-order accordingly
-k = 0:(Ni+1)/2-1;
-cn = cn((Ni+1)/2+1:end,:);
+    cn = fft(u_hist)/(Ni+1);
+    cn = fftshift(cn); % Re-order accordingly
+    k = 0:(Ni+1)/2-1;
+    cn = cn((Ni+1)/2+1:end,:);
 
-cn_ana = fft(u_ana)/(Ni+1);
-cn_ana = fftshift(cn_ana); % Re-order accordingly
-cn_ana = cn_ana((Ni+1)/2+1:end,:);
+%     cn_ana = fft(u_ana)/(Ni+1);
+%     cn_ana = fftshift(cn_ana); % Re-order accordingly
+%     cn_ana = cn_ana((Ni+1)/2+1:end,:);
+    k_nyq = pi/(x(2)-x(1));
+    
+
+    plot(k, sum(abs(cn),2), 'DisplayName', append('N = ', num2str(Ni)))
+    hold on
+    %plot([k_nyq, k_nyq], [0, 0.4])
+    
+
+end
+
+grid on
+xlabel('N')
+ylabel('$c_n$')
+xlim([0,15])
+legend
 
 figure
-for t=1:5
-    plot(time, abs(cn(t,:)-cn_ana(t,:)), 'DisplayName', num2str(time(t)))
+for i=1:length(k)
+    plot(time, abs(cn(i,:))-mean(abs(cn(i,:))))
     hold on
 end
-grid on
-xlabel('k')
-ylabel('$c_k$')
-legend
+xlabel('Time')
+ylabel('$c_n$')
+
+%% Question  (f)
+
+saving_hist = 1;
+conservation = 0;
+
+Ni = 55;
+
+c_arr = [0.5, 0.25];
+x0_arr = [-40, -15];
+
+[u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, saving_hist, conservation);
+
+%%
+
+figure
+hold on
+for i = 1:500:length(time)
+    plot(x,u_hist(:,i), '-r')
+    hold on
+    pause(0.1)
+    clf
+end
 
