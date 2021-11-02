@@ -7,7 +7,7 @@ set(groot, 'defaultLegendInterpreter','latex');
 set(0,'defaultAxesFontSize',12);
 set(0, 'DefaultLineLineWidth', 1);
 set(0, 'DefaultFigureRenderer', 'painters');
-set(0,'DefaultFigureWindowStyle','docked')
+set(0,'DefaultFigureWindowStyle','normal')
 %% Question (a) - Legendre Tau Method (LTM)
 
 %Input: 
@@ -28,9 +28,6 @@ for i=1:length(eps)
        
     end
 end
-
-
-
 
 figure('Name','a-Legendre Tau Method solution')
 plot(X,ux)
@@ -323,7 +320,7 @@ for i=1:length(c_lst)
     
 end
 
-%%
+%% Question (e)
 
 saving_hist = 1;
 conservation = 0;
@@ -381,26 +378,52 @@ Ni = 55;
 c_arr = [0.5, 0.25];
 x0_arr = [-40, -15];
 
+% Calling function to simulate the collision of solitons
 [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, saving_hist, conservation);
 
-%%
-
-[X,T] = meshgrid(x,time(1:900:end));
+[X,T] = meshgrid(x,time(1:800:end));
 figure('Name', 'Spectral method')
-surf(X,T,u_hist(:,1:900:end)')
+surf(X,T,u_hist(:,1:800:end)')
 xlabel('x')
 ylabel('t')
 zlabel('$\overline{u}(x,t)$')
 
+% figure
+% hold on
+% for i = 1:500:length(time)
+%     plot(x,u_hist(:,i), '-r')
+%     hold on
+%     pause(0.1)
+%     clf
+% end
+
+%% Question (g)
+
+saving_hist = 1;
+conservation = 0;
+
+Ni_lst = 2.^(3:9) + 1;
+time_arr = zeros(length(Ni_lst),1);
+
+for n=1:length(Ni_lst)
+    Ni = Ni_lst(n);
+    txt = ['=> Computing for N = ',num2str(Ni)];
+    disp(txt)
+    c = 5;
+    x0 = 0;
+
+    tic;
+    [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, saving_hist, conservation);
+    time_arr(n,1) = toc; % CPU Time
+    
+end
 
 %%
 
-figure
-hold on
-for i = 1:500:length(time)
-    plot(x,u_hist(:,i), '-r')
-    hold on
-    pause(0.1)
-    clf
-end
+figure()
+loglog(Ni_lst,time_arr)
+grid on
+xlabel('N');
+ylabel('CPU Time [ms]');
+
 
