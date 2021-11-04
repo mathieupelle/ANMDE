@@ -322,20 +322,23 @@ for i=1:length(c_lst)
 end
 
 %% Question (d) - domain size study
+saving_hist = 1;
+conservation = 0;
 x0 = 0;
-c_lst = [0.25, 0.5, 1,5];
-x = linspace(0,2*pi,10000);
+c_lst = [0.25, 0.5, 1];
+x = linspace(0,4*pi,10000);
 soli = 0.5*c*sech(0.5.*sqrt(c_lst).*(x'-x0)).^2;
 leg = {'c = 0.25', 'c = 0.5', 'c = 1.0', 'c = 5.0'};
 
-figure('Name','Solition solution for domain size study')
+figure('Name','Soliton  for domain size study')
 semilogy(x,soli)
 legend(leg, 'Location', 'Best')
 xlabel('Position $x$')
 grid on
-ylabel('Solition $u(x,t=0)$')
+ylabel('Soliton $u(x,t=0)$')
 
 
+<<<<<<< Updated upstream
 %% Question (d) - domain size 
 
 c = 5;
@@ -376,6 +379,37 @@ xlabel('N')
 grid on
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 legend({'d = $\pi$', 'd = $2\pi$', 'd = $3\pi$', 'd = $4\pi$'})
+=======
+% Calculate the error for different velocities
+Ni_lst = 2.^(2:8) + 1;
+
+finalL2norm = zeros(length(Ni_lst),length(c_lst));
+[err2,errinf,errl2] = deal(zeros(length(Ni_lst),length(c_lst)));
+for c=1:length(c_lst)
+    
+    parfor n=1:length(Ni_lst)
+        Ni = Ni_lst(n);
+        txt = ['=> Computing for N = ',num2str(Ni)];
+        disp(txt)
+        x0 = 0;
+        
+        [u_hist, u_ana, errors, x, ~, ~] = RK4_KdV(Ni, c_lst(c), x0, [-4*pi, 4*pi], saving_hist, conservation);
+        
+        finalL2norm(n,c) = sqrt(abs(trapz((u_hist(:,end) - u_ana(:,end)).^2, x)));
+        err2(n,c) = sum(errors.norm2)/length(errors.norm2);
+        errinf(n,c) = errors.normInf(1);
+        errl2(n,c) = sum(errors.L2norm)/length(errors.L2norm);
+    end
+end
+
+%errl2 = errl2(:,:)./errl2(1,:);
+figure('Name','Convergence plot with different velocities')
+loglog(Ni_lst,errl2','-o')
+legend(leg, 'Location', 'Best')
+grid on
+xlabel('$N$')
+ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
+>>>>>>> Stashed changes
 
 %% Question (e)
 
