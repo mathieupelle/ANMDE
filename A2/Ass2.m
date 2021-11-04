@@ -414,7 +414,7 @@ saving_hist = 1;
 conservation = 0;
 dealiasing_mode = [0,1];
 
-Ni = 51;
+Ni = 201;
 c = 5;
 x0 = 1;
 for j=1:2
@@ -453,6 +453,15 @@ end
 
 figure
 plot(k,std(abs(cn'))-std(abs(cn_deal')))
+
+figure('Name','Std over mean')
+semilogy(k,std(abs(cn'))./abs(mean(cn')))
+hold on
+semilogy(k,std(abs(cn_deal'))./abs(mean(cn_deal')))
+legend('Basline',"Orszag's rule")
+xlabel('Coefficient $c_n$')
+ylabel('$\sigma_n/\bar{c_n}$')
+grid on
 
 
 %% Question  (f)
