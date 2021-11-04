@@ -336,7 +336,46 @@ grid on
 ylabel('Solition $u(x,t=0)$')
 
 
+%% Question (d) - domain size 
 
+c = 5;
+x0 = 0;
+d_lst = [1,2,3,4]*pi;
+
+x = linspace(0,d_lst(end),1000);
+soli = 0.5*c*sech(0.5.*sqrt(c).*(x'-x0)).^2;
+figure('Name','Solition solution for domain size study')
+semilogy(x, soli, 'k')
+hold on
+for i=1:length(d_lst)
+    plot([d_lst(i), d_lst(i)], [min(soli), max(soli)], '--')
+end
+leg = {'Soliton', 'd = $\pi$', 'd = $2\pi$', 'd = $3\pi$', 'd = $4\pi$'};
+legend(leg, 'Location', 'Best')
+xlabel('Position $x$')
+grid on
+ylabel('Soliton $u(x,t=0)$')
+
+saving_hist = 1;
+conservation = 1;
+
+Ni_lst = 2.^(3:8)+1;
+finalL2norm = zeros(length(d_lst),length(Ni_lst));
+for n=1:length(Ni_lst)
+    Ni = Ni_lst(n);
+    txt = ['=> Computing for N = ',num2str(Ni)];
+    disp(txt)
+    parfor d=1:length(d_lst)
+        [~, ~, errors, ~, ~, ~] = RK4_KdV(Ni, c, x0, [-d_lst(d), d_lst(d)], saving_hist, conservation);
+        finalL2norm(d, n) = sum(errors.L2norm)/length(errors.L2norm);
+    end
+end
+figure('Name', 'Error')
+loglog(Ni_lst, finalL2norm, '-o')
+xlabel('N')
+grid on
+ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
+legend({'d = $\pi$', 'd = $2\pi$', 'd = $3\pi$', 'd = $4\pi$'})
 
 %% Question (e)
 
