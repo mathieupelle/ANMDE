@@ -181,7 +181,7 @@ colorbar
 %%  Question (c) - Solving the KdV equation
 
 saving_hist = 1;
-conservation = 0;
+conservation = 1;
 
 Ni_lst = 2.^(3:9) + 1;
 Ni_lst = 31;
@@ -242,17 +242,17 @@ grid on
 xlabel('N')
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 
-% if saving_hist == 1
-%     figure
-%     hold on
-%     for i = 1:10:length(time)
-%         plot(x,u_hist(:,i), '-r')
-%         hold on
-%         plot(x,u_ana(:,i), '--ok')
-%         pause(0.005)
-%         clf
-%     end
-% end
+if saving_hist == 1
+    figure
+    hold on
+    for i = 1:10:length(time)
+        plot(x,u_hist(:,i), '-r')
+        hold on
+        plot(x,u_ana(:,i), '--ok')
+        pause(0.005)
+        clf
+    end
+end
 
 %% Question (d)
 
@@ -325,48 +325,25 @@ end
 saving_hist = 1;
 conservation = 0;
 
-Ni_lst = 3:4:51;
-%col = {'r', 'g', 'k', 'b', 'm'};
-figure
-for i=1:length(Ni_lst)
-    
-    Ni = Ni_lst(i);
-    c = 5;
-    x0 = 0;
+Ni = 51;
+c = 1;
+x0 = 0;
 
-    [u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, saving_hist, conservation);
+[u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, saving_hist, conservation);
 
-    cn = fft(u_hist)/(Ni+1);
-    cn = fftshift(cn); % Re-order accordingly
-    k = 0:(Ni+1)/2-1;
-    cn = cn((Ni+1)/2+1:end,:);
-
-%     cn_ana = fft(u_ana)/(Ni+1);
-%     cn_ana = fftshift(cn_ana); % Re-order accordingly
-%     cn_ana = cn_ana((Ni+1)/2+1:end,:);
-    k_nyq = pi/(x(2)-x(1));
-    
-
-    plot(k, sum(abs(cn),2), 'DisplayName', append('N = ', num2str(Ni)))
-    hold on
-    %plot([k_nyq, k_nyq], [0, 0.4])
-    
-
-end
-
-grid on
-xlabel('N')
-ylabel('$c_n$')
-xlim([0,15])
-legend
+cn = fft(u_hist)/(Ni+1);
+cn = fftshift(cn); % Re-order accordingly
+k = 0:(Ni+1)/2-1;
+cn = cn((Ni+1)/2+1:end,:);
 
 figure
 for i=1:length(k)
-    plot(time, abs(cn(i,:))-mean(abs(cn(i,:))))
+    plot(time, abs(cn(i,:)), 'DisplayName', k(i))
     hold on
 end
 xlabel('Time')
 ylabel('$c_n$')
+legend
 
 %% Question  (f)
 
@@ -388,14 +365,14 @@ xlabel('x')
 ylabel('t')
 zlabel('$\overline{u}(x,t)$')
 
-% figure
-% hold on
-% for i = 1:500:length(time)
-%     plot(x,u_hist(:,i), '-r')
-%     hold on
-%     pause(0.1)
-%     clf
-% end
+figure
+hold on
+for i = 1:500:length(time)
+    plot(x,u_hist(:,i), '-r')
+    hold on
+    pause(0.1)
+    clf
+end
 
 %% Question (g)
 
