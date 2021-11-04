@@ -183,14 +183,14 @@ colorbar
 saving_hist = 1;
 conservation = 1;
 
-Ni_lst = 2.^(3:7) + 1;
-%Ni_lst = 31;
+% Ni_lst = 2.^(3:7) + 1;
+Ni_lst = 31;
 finalL2norm = zeros(length(Ni_lst),1);
 for n=1:length(Ni_lst)
     Ni = Ni_lst(n);
     txt = ['=> Computing for N = ',num2str(Ni)];
     disp(txt)
-    c = 1;
+    c = 5;
     x0 = 0;
 
     [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, saving_hist, conservation);
@@ -242,18 +242,18 @@ grid on
 xlabel('N')
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 
-% if saving_hist == 1
-%     figure
-%     hold on
-%     for i = 1:10:length(time)
-%         plot(x,u_hist(:,i), '-r')
-%         hold on
-%         plot(x,u_ana(:,i), '--ok')
-%         ylim([-0.5 3]);
-%         pause(0.005)
-%         clf
-%     end
-% end
+if saving_hist == 1
+    figure
+    hold on
+    for i = 1:10:length(time)
+        plot(x,u_hist(:,i), '-r')
+        hold on
+        plot(x,u_ana(:,i), '--ok')
+        ylim([-0.5 3]);
+        pause(0.005)
+        clf
+    end
+end
 
 %% Question (d)
 

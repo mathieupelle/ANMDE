@@ -10,7 +10,8 @@ function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, saving_his
     % Temporal discretisation and IC
     u_init = 0.5*c*sech(0.5*sqrt(c).*(x-c*0-x0)).^2; %initial guess
     dt = 2.82/(3*(Ni+1)*max(abs(u_init))+(Ni+1)^3/8); %time step from RK4 stability
-    time = 0:dt:1; %time 
+    dt = 1/Ni^2 * 0.1;
+    time = 0:dt:10; %time 
     
     
     % Allocating storage
@@ -63,26 +64,11 @@ function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, saving_his
             x_ana = x+c*time(t);
             
             d = x_end-x_start;
-
-            %u_ana(:,t+1) = 0.5*c*sech(0.5*sqrt(c)*(x-c*time(t+1)-x0)).^2; %analytic
-            u_ana(:,t+1) = 0.5*c*sech(0.5*sqrt(c)*(x-c*time(t+1)-x0)).^2 ...
-            + 0.5*c*sech(0.5*sqrt(c)*(x-c*time(t+1)-x0+d)).^2 ...
-            + 0.5*c*sech(0.5*sqrt(c)*(x-c*time(t+1)-x0+2*d)).^2 ... 
-            + 0.5*c*sech(0.5*sqrt(c)*(x-c*time(t+1)-x0+3*d)).^2; %analytic
-
-%             for k=0:100
-%                 if (x_end-dx)*(k+1) > x_ana(end)
-%                     break
-%                 end
-%             end
-%             %Calculate necessary distances for the reassignemnt
-%             l = x_ana(end)-(x_end-dx)*k;
-%             d = ((x_end-dx) - x_start)/2;
-%             
-%             
-%             u_ana(:,t+1) = [u_ana(x_ana>(x_ana(end)-l),t+1); u_ana(x_ana<=(x_ana(end)-l),t+1)];       
-%             
             
+            %Calculate analytical solution
+            for i=0:round(c*time(end)/d,0)
+                u_ana(:,t+1) = u_ana(:,t+1) + 0.5*c*sech(0.5*sqrt(c)*(x'-c*time(t+1)-x0+d*i)).^2;
+            end         
             L2norm(t+1) = sqrt(abs(trapz((u - u_ana(:,t+1)).^2, x)));  %L2 norm
             
             if conservation == 1
