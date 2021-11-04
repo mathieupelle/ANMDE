@@ -1,8 +1,8 @@
-function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, saving_hist, conservation)
+function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, limits, saving_hist, conservation)
     
     % Spatial discretisation
-    x_end = 2*pi; %left xlim
-    x_start = -2*pi; %right xlim
+    x_end = limits(2); %left xlim
+    x_start = limits(1); %right xlim
     scaling = (x_end-x_start)/(2*pi); %scaling factor
     dx = (x_end-x_start)/(Ni+1); %spatial element width
     x = x_start:dx:x_end-dx; %x vector
