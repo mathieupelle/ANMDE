@@ -1,5 +1,13 @@
-function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, limits, saving_hist, conservation)
-    
+function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, limits, saving_hist, conservation,dealiasing)
+
+    %Apply Orszag's rule for dealiasing
+    if dealiasing == 1
+        Ni = round(3*Ni/2,0);
+        if mod(Ni,2) == 0
+            Ni = Ni+1;
+        end
+    end
+
     % Spatial discretisation
     x_end = limits(2); %left xlim
     x_start = limits(1); %right xlim
@@ -10,7 +18,7 @@ function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, limits, sa
     % Temporal discretisation and IC
     u_init = 0.5*c*sech(0.5*sqrt(c).*(x-c*0-x0)).^2; %initial guess
     dt = 2.82/(3*(Ni+1)*max(abs(u_init))+(Ni+1)^3/8); %time step from RK4 stability
-    time = 0:dt:0.2; %time 
+    time = 0:dt:10; %time 
     
     
     % Allocating storage
@@ -52,10 +60,10 @@ function [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, limits, sa
 %         K4 = -6*(u'+dt*K3/2)*D*(u+dt*K3/2) - D3*(u+dt*K3/2);
 
         %FFT Runge-Kutta
-        K1 = KdV(u, scaling);
-        K2 = KdV(u+dt*K1/2, scaling);
-        K3 = KdV(u+dt*K2/2, scaling);
-        K4 = KdV(u+dt*K3, scaling);
+        K1 = KdV(u, scaling, dealiasing);
+        K2 = KdV(u+dt*K1/2, scaling, dealiasing);
+        K3 = KdV(u+dt*K2/2, scaling, dealiasing);
+        K4 = KdV(u+dt*K3, scaling, dealiasing);
         u = u + dt/6*(K1+2*K2+2*K3+K4);
         
         if saving_hist == 1 %saving each time step

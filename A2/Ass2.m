@@ -338,7 +338,6 @@ grid on
 ylabel('Soliton $u(x,t=0)$')
 
 
-<<<<<<< Updated upstream
 %% Question (d) - domain size 
 
 c = 5;
@@ -379,7 +378,6 @@ xlabel('N')
 grid on
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 legend({'d = $\pi$', 'd = $2\pi$', 'd = $3\pi$', 'd = $4\pi$'})
-=======
 % Calculate the error for different velocities
 Ni_lst = 2.^(2:8) + 1;
 
@@ -409,33 +407,42 @@ legend(leg, 'Location', 'Best')
 grid on
 xlabel('$N$')
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
->>>>>>> Stashed changes
 
 %% Question (e)
 
 saving_hist = 1;
 conservation = 0;
+dealiasing = 1;
 
-Ni = 51;
+Ni = 21;
 c = 1;
 x0 = 0;
 
-[u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation);
+[u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation,dealiasing);
 
-cn = fft(u_hist)/(Ni+1);
-cn = fftshift(cn); % Re-order accordingly
-k = 0:(Ni+1)/2-1;
-cn = cn((Ni+1)/2+1:end,:);
+if dealiasing
+    cn_deal = fftshift(fft(u_hist));
+    cn_deal = cn_deal(round((length(u_hist(:,1))-Ni)/2,0):round((length(u_hist(:,1))-Ni)/2,0)+Ni,:);
+    cn = cn_deal((Ni+1)/2+1:end,:);
+else
+    
+    cn = fft(u_hist)/(Ni+1);
+    cn = fftshift(cn); % Re-order accordingly
+    k = 0:(Ni+1)/2-1;
+    cn = cn((Ni+1)/2+1:end,:);
+end
 
 figure
 for i=1:length(k)
-    plot(time, abs(cn(i,:)), 'DisplayName', k(i))
+    semilogy(time, (abs(cn(i,:))),'DisplayName', num2str(k(i)))
     hold on
 end
 xlabel('Time')
-ylabel('$c_n$')
+ylabel('$|c_n|$')
 legend
 
+figure
+plot(k,std(abs(cn')))
 %% Question  (f)
 
 saving_hist = 1;
