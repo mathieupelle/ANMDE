@@ -1,8 +1,8 @@
-function [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, saving_hist, conservation)
+function [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, limits, saving_hist, conservation)
     
     % Spatial discretisation
-    x_end = 30; %left xlim
-    x_start = -50; %right xlim
+    x_end = limits(2); %left xlim
+    x_start = limits(1); %right xlim
     scaling = (x_end-x_start)/(2*pi); %scaling factor
     dx = (x_end-x_start)/(Ni+1); %spatial element width
     x = x_start:dx:x_end-dx; %x vector

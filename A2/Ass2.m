@@ -273,7 +273,7 @@ for i=1:length(c_lst)
     x0 = 0;
     c = c_lst(i);
     
-    [~, ~, errors, ~, time, quant] = RK4_KdV(Ni, c, x0,, [-2*pi, 2*pi], saving_hist, conservation);
+    [~, ~, errors, ~, time, quant] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation);
     
     set(0, 'CurrentFigure', f1)
     loglog(time, errors.norm2)
@@ -347,7 +347,7 @@ Ni = 51;
 c = 1;
 x0 = 0;
 
-[u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, , [-2*pi, 2*pi], saving_hist, conservation);
+[u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation);
 
 cn = fft(u_hist)/(Ni+1);
 cn = fftshift(cn); % Re-order accordingly
@@ -374,7 +374,7 @@ c_arr = [0.5, 0.25];
 x0_arr = [-40, -15];
 
 % Calling function to simulate the collision of solitons
-[u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, [-2*pi, 2*pi], saving_hist, conservation);
+[u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, [-50, 30], saving_hist, conservation);
 
 [X,T] = meshgrid(x,time(1:800:end));
 figure('Name', 'Spectral method')
