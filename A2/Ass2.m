@@ -425,26 +425,34 @@ for j=1:2
         cn_deal = fftshift(fft(u_hist));
         cn_deal = cn_deal(round((length(u_hist(:,1))-Ni)/2,0):round((length(u_hist(:,1))-Ni)/2,0)+Ni,:);
         cn_deal = cn_deal((Ni+1)/2+1:end,:);
+        
+         figure
+        for i=1:length(k)
+            semilogy(time, (abs(cn_deal(i,:))),'DisplayName', num2str(k(i)))
+            hold on
+        end
     else
 
         cn = fft(u_hist)/(Ni+1);
         cn = fftshift(cn); % Re-order accordingly
         k = 0:(Ni+1)/2-1;
         cn = cn((Ni+1)/2+1:end,:);
+        
+        figure
+        for i=1:length(k)
+            semilogy(time, (abs(cn(i,:))),'DisplayName', num2str(k(i)))
+            hold on
+        end
     end
 
-    figure
-    for i=1:length(k)
-        semilogy(time, (abs(cn(i,:))),'DisplayName', num2str(k(i)))
-        hold on
-    end
+
     xlabel('Time')
     ylabel('$|c_n|$')
     legend
 end
 
 figure
-plot(k,std(abs(cn'))-std(abs(cn')))
+plot(k,std(abs(cn'))-std(abs(cn_deal')))
 
 
 %% Question  (f)
