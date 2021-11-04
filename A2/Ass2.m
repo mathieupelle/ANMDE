@@ -182,42 +182,44 @@ colorbar
 
 saving_hist = 1;
 conservation = 1;
+dealiasing = 0;
 
-% Ni_lst = 2.^(3:7) + 1;
-Ni_lst = 31;
+Ni_lst = 2.^(3:7) + 1;
+%Ni_lst = 100;
 finalL2norm = zeros(length(Ni_lst),1);
 for n=1:length(Ni_lst)
     Ni = Ni_lst(n);
-    txt = ['=> Computing for N = ',num2str(Ni)];
-    disp(txt)
+    txt = ['=> Computing for N = ',num2str(Ni)]; disp(txt)
     c = 5;
     x0 = 0;
+    x_limits = [-2*pi, 2*pi];
+    end_time = 2;
 
-    [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation);
+    [u_hist, u_ana, errors, x, time, ~] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
     
-    finalL2norm(n,1 ) = sqrt(abs(trapz((u_hist(:,end) - u_ana(:,end)).^2, x)));
+    finalL2norm(n, 1) = sqrt(abs(trapz((u_hist(:,end) - u_ana(:,end)).^2, x)));
 
     if n==length(Ni_lst)
         if saving_hist ==1
 
-%         [X,T] = meshgrid(x,time);
-%         figure('Name', 'Spectral method')
-%         surf(X,T,u_hist')
-%         xlabel('x')
-%         ylabel('t')
-%         zlabel('$\overline{u}(x,t)$')
-%         
-%         figure('Name', 'Soliton')
-%         surf(X,T,u_ana')
-%         xlabel('x')
-%         ylabel('t')
-%         zlabel('u(x,t)')
-
-%         figure('Name', 'Absolute error')
-%         surf(X,T,abs(u_ana'-u_hist'))
-%         xlabel('x')
-%         ylabel('t')
-%         zlabel('$|\overline{u}(x,t) - u(x,t)|$')
+%             [X,T] = meshgrid(x,time);
+%             figure('Name', 'Spectral method')
+%             surf(X,T,u_hist')
+%             xlabel('x')
+%             ylabel('t')
+%             zlabel('$\overline{u}(x,t)$')
+% 
+%             figure('Name', 'Soliton')
+%             surf(X,T,u_ana')
+%             xlabel('x')
+%             ylabel('t')
+%             zlabel('u(x,t)')
+% 
+%             figure('Name', 'Absolute error')
+%             surf(X,T,abs(u_ana'-u_hist'))
+%             xlabel('x')
+%             ylabel('t')
+%             zlabel('$|\overline{u}(x,t) - u(x,t)|$')
 
             figure('Name', 'L2 norm in time')
             plot(time, errors.L2norm)
@@ -255,10 +257,11 @@ if saving_hist == 1
     end
 end
 
-%% Question (d)
+%% Question (d) - conservation of quantities
 
 saving_hist = 1;
 conservation = 1;
+dealiasing = 0;
 
 c_lst = [0.25, 0.5, 1];
 leg = {'c = 0.25', 'c = 0.5', 'c = 1.0'};
@@ -269,14 +272,16 @@ f4 = figure;
 f5 = figure;
 for i=1:length(c_lst)
     
-    Ni = 55;
+    Ni = 101;
     x0 = 0;
     c = c_lst(i);
+    x_limits = [-4*pi, 4*pi];
+    end_time = 5;
     
-    [~, ~, errors, ~, time, quant] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation);
+    [~, ~, errors, ~, time, quant] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
     
     set(0, 'CurrentFigure', f1)
-    loglog(time, errors.norm2)
+    semilogy(time, errors.norm2)
     grid on
     hold on
     xlabel('Time')
@@ -284,7 +289,7 @@ for i=1:length(c_lst)
     legend(leg, 'Location', 'Best')
     
     set(0, 'CurrentFigure', f2)
-    loglog(time, errors.normInf)
+    semilogy(time, errors.normInf)
     grid on
     hold on
     xlabel('Time')
@@ -293,40 +298,39 @@ for i=1:length(c_lst)
 
     set(0, 'CurrentFigure', f3)
     err = abs(quant.M - quant.M_ana)./abs(quant.M_ana);
-    loglog(time, err)
+    semilogy(time, err)
     grid on
     hold on
     xlabel('Time')
-    ylabel('Mass (M)')
+    ylabel('Relative error in Mass')
     legend(leg, 'Location', 'Best')
     
     set(0, 'CurrentFigure', f4)
     err = abs(quant.V - quant.V_ana)./abs(quant.V_ana);
-    loglog(time, err)
+    semilogy(time, err)
     grid on
     hold on
     xlabel('Time')
-    ylabel('Momentum (V)')
+    ylabel('Relative error in Momentum')
     legend(leg, 'Location', 'Best')
     
     
     set(0, 'CurrentFigure', f5)
     err = abs(quant.E - quant.E_ana)./abs(quant.E_ana);
-    loglog(time, err)
+    semilogy(time, err)
     grid on
     hold on
     xlabel('Time')
-    ylabel('Energy (E)')
+    ylabel('Relative error in Energy')
     legend(leg, 'Location', 'Best')
     
 end
 
-%% Question (d) - domain size study
-saving_hist = 1;
-conservation = 0;
+%% Question (d) - error for different velocities
+
 x0 = 0;
 c_lst = [0.25, 0.5, 1];
-x = linspace(0,4*pi,10000);
+x = linspace(0, 4*pi,10000);
 soli = 0.5*c*sech(0.5.*sqrt(c_lst).*(x'-x0)).^2;
 leg = {'c = 0.25', 'c = 0.5', 'c = 1.0', 'c = 5.0'};
 
@@ -337,8 +341,43 @@ xlabel('Position $x$')
 grid on
 ylabel('Soliton $u(x,t=0)$')
 
+saving_hist = 1;
+conservation = 1;
+dealiasing = 0;
+Ni_lst = 2.^(2:8) + 1;
 
-%% Question (d) - domain size 
+x_limits = [-4*pi, 4*pi];
+end_time = 0.1;
+
+finalL2norm = zeros(length(Ni_lst),length(c_lst));
+[err2,errinf,errl2] = deal(zeros(length(Ni_lst),length(c_lst)));
+for c=1:length(c_lst)
+    
+    parfor n=1:length(Ni_lst)
+        Ni = Ni_lst(n);
+        txt = ['=> Computing for N = ',num2str(Ni)];
+        disp(txt)
+
+        
+        [u_hist, u_ana, errors, x, ~, ~] = RK4_KdV(Ni, c_lst(c), x0, x_limits, end_time, saving_hist, conservation, dealiasing);
+        
+        finalL2norm(n,c) = sqrt(abs(trapz((u_hist(:,end) - u_ana(:,end)).^2, x)));
+        err2(n,c) = sum(errors.norm2)/length(errors.norm2);
+        errinf(n,c) = errors.normInf(1);
+        errl2(n,c) = sum(errors.L2norm)/length(errors.L2norm);
+    end
+end
+
+%errl2 = errl2(:,:)./errl2(1,:);
+figure('Name','Convergence plot with different velocities')
+loglog(Ni_lst,errl2','-o')
+legend(leg, 'Location', 'Best')
+grid on
+xlabel('$N$')
+ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
+
+
+%% Question (d) - error for different domain sizes
 
 c = 5;
 x0 = 0;
@@ -360,81 +399,61 @@ ylabel('Soliton $u(x,t=0)$')
 
 saving_hist = 1;
 conservation = 1;
+dealiasing = 0;
+
+end_time = 0.2;
 
 Ni_lst = 2.^(3:8)+1;
 finalL2norm = zeros(length(d_lst),length(Ni_lst));
 for n=1:length(Ni_lst)
     Ni = Ni_lst(n);
-    txt = ['=> Computing for N = ',num2str(Ni)];
-    disp(txt)
+    txt = ['=> Computing for N = ',num2str(Ni)];disp(txt)
     parfor d=1:length(d_lst)
-        [~, ~, errors, ~, ~, ~] = RK4_KdV(Ni, c, x0, [-d_lst(d), d_lst(d)], saving_hist, conservation);
+        x_limits = [-d_lst(d), d_lst(d)];
+        [~, ~, errors, ~, ~, ~] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
         finalL2norm(d, n) = sum(errors.L2norm)/length(errors.L2norm);
     end
 end
-figure('Name', 'Error')
+
+figure('Name', 'Convergence plot with different range')
 loglog(Ni_lst, finalL2norm, '-o')
 xlabel('N')
 grid on
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 legend({'d = $\pi$', 'd = $2\pi$', 'd = $3\pi$', 'd = $4\pi$'})
-% Calculate the error for different velocities
-Ni_lst = 2.^(2:8) + 1;
-
-finalL2norm = zeros(length(Ni_lst),length(c_lst));
-[err2,errinf,errl2] = deal(zeros(length(Ni_lst),length(c_lst)));
-for c=1:length(c_lst)
-    
-    parfor n=1:length(Ni_lst)
-        Ni = Ni_lst(n);
-        txt = ['=> Computing for N = ',num2str(Ni)];
-        disp(txt)
-        x0 = 0;
-        
-        [u_hist, u_ana, errors, x, ~, ~] = RK4_KdV(Ni, c_lst(c), x0, [-4*pi, 4*pi], saving_hist, conservation);
-        
-        finalL2norm(n,c) = sqrt(abs(trapz((u_hist(:,end) - u_ana(:,end)).^2, x)));
-        err2(n,c) = sum(errors.norm2)/length(errors.norm2);
-        errinf(n,c) = errors.normInf(1);
-        errl2(n,c) = sum(errors.L2norm)/length(errors.L2norm);
-    end
-end
-
-%errl2 = errl2(:,:)./errl2(1,:);
-figure('Name','Convergence plot with different velocities')
-loglog(Ni_lst,errl2','-o')
-legend(leg, 'Location', 'Best')
-grid on
-xlabel('$N$')
-ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 
 %% Question (e)
 
 saving_hist = 1;
-conservation = 0;
+conservation = 1;
 dealiasing_mode = [0,1];
 
-Ni = 201;
+Ni = 31;
 c = 5;
 x0 = 1;
+x_limits = [-2*pi, 2*pi];
+end_time = 10;
 for j=1:2
     dealiasing = dealiasing_mode(j);
-    [u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation, dealiasing);
+    [u_hist, u_ana, errors, x, time, ~] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
 
     if dealiasing
         cn_deal = fftshift(fft(u_hist));
         cn_deal = cn_deal(round((length(u_hist(:,1))-Ni)/2,0):round((length(u_hist(:,1))-Ni)/2,0)+Ni,:);
         cn_deal = cn_deal((Ni+1)/2+1:end,:);
         
-         figure
+        errors_deal = errors;
+        
+        figure
         for i=1:length(k)
             semilogy(time, (abs(cn_deal(i,:))),'DisplayName', num2str(k(i)))
             hold on
         end
-    else
 
+    else
+        errors_alias = errors;
         cn = fft(u_hist)/(Ni+1);
-        cn = fftshift(cn); % Re-order accordingly
+        cn = fftshift(cn); %Re-order accordingly
         k = 0:(Ni+1)/2-1;
         cn = cn((Ni+1)/2+1:end,:);
         
@@ -443,23 +462,30 @@ for j=1:2
             semilogy(time, (abs(cn(i,:))),'DisplayName', num2str(k(i)))
             hold on
         end
+
     end
 
 
     xlabel('Time')
     ylabel('$|c_n|$')
-    legend
+    %legend
 end
 
-figure
-plot(k,std(abs(cn'))-std(abs(cn_deal')))
+figure('Name','Effect of aliasing on final solution')
+plot(time, errors_alias.L2norm,  'DisplayName', 'Aliased')
+hold on
+plot(time, errors_deal.L2norm, 'DisplayName', 'Dealiased')
+ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
+xlabel('t')
+grid on
+legend 
 
 figure('Name','Std over mean')
 semilogy(k,std(abs(cn'))./abs(mean(cn')))
 hold on
 semilogy(k,std(abs(cn_deal'))./abs(mean(cn_deal')))
-legend('Basline',"Orszag's rule")
-xlabel('Coefficient $c_n$')
+legend('Baseline',"Orszag's rule")
+xlabel('$n$')
 ylabel('$\sigma_n/\bar{c_n}$')
 grid on
 
@@ -468,14 +494,17 @@ grid on
 
 saving_hist = 1;
 conservation = 0;
+dealiasing = 1;
 
-Ni = 55;
+Ni = 51;
 
 c_arr = [0.5, 0.25];
 x0_arr = [-40, -15];
+x_limits = [-50, 30];
+end_time = 120;
 
 % Calling function to simulate the collision of solitons
-[u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, [-50, 30], saving_hist, conservation);
+[u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, x_limits, end_time, saving_hist, conservation, dealiasing);
 
 [X,T] = meshgrid(x,time(1:800:end));
 figure('Name', 'Spectral method')
@@ -486,10 +515,10 @@ zlabel('$\overline{u}(x,t)$')
 
 figure
 hold on
-for i = 1:500:length(time)
+for i = 1:1000:length(time)
     plot(x,u_hist(:,i), '-r')
     hold on
-    pause(0.1)
+    pause(0.001)
     clf
 end
 
@@ -498,28 +527,42 @@ end
 saving_hist = 1;
 conservation = 0;
 
-Ni_lst = 2.^(3:9) + 1;
-time_arr = zeros(length(Ni_lst),1);
+Ni_lst = 2.^(3:7) + 1;
+time_arr = zeros(length(Ni_lst),2);
+time_arr_norm = zeros(length(Ni_lst),2);
+for j=1:2
+    if j==1
+        dealiasing = 0;
+    else
+        dealiasing = 1;
+    end
+    parfor n=1:length(Ni_lst)
+        Ni = Ni_lst(n);
+        txt = ['=> Computing for N = ',num2str(Ni)];
+        disp(txt)
+        c = 5;
+        x0 = 0;
+        x_limits = [-4*pi, 4*pi];
+        end_time = 5;
 
-for n=1:length(Ni_lst)
-    Ni = Ni_lst(n);
-    txt = ['=> Computing for N = ',num2str(Ni)];
-    disp(txt)
-    c = 5;
-    x0 = 0;
+        tic;
+        [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
+        time_arr(n,j) = toc; % CPU Time
+        time_arr_norm(n,j) = toc/(time(2)-time(1));
 
-    tic;
-    [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation);
-    time_arr(n,1) = toc; % CPU Time
-    
+    end
 end
-
-%%
-
 figure()
-loglog(Ni_lst,time_arr)
+loglog(Ni_lst,time_arr(:,1), '-g', 'DisplayName', 'CPU time [ms] (aliased)')
+hold on
+loglog(Ni_lst, time_arr_norm(:,1), '-b', 'DisplayName', 'Normalised CPU time (aliased)')
+loglog(Ni_lst,time_arr(:,2), '--g', 'DisplayName', 'CPU time [ms] (dealiased)')
+loglog(Ni_lst, time_arr_norm(:,2), '--b', 'DisplayName', 'Normalised CPU time (dealiased)')
+plot(Ni_lst, Ni_lst.*log(Ni_lst), '--k', 'DisplayName', '$N\log(N)$')
 grid on
 xlabel('N');
-ylabel('CPU Time [ms]');
+ylabel('Performance');
+legend('Location', 'Best')
+
 
 

@@ -1,4 +1,4 @@
-function [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, limits, saving_hist, conservation)
+function [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, limits, end_time, saving_hist, conservation, dealiasing)
     
     % Spatial discretisation
     x_end = limits(2); %left xlim
@@ -11,8 +11,9 @@ function [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr,
     u_init = 0.5*c_arr(1)*sech(0.5*sqrt(c_arr(1)).*(x-c_arr(1)*0-x0_arr(1))).^2+...
              0.5*c_arr(2)*sech(0.5*sqrt(c_arr(2)).*(x-c_arr(2)*0-x0_arr(2))).^2; %initial guess
     dt = 2.82/(3*(Ni+1)*max(abs(u_init))+(Ni+1)^3/8); %time step from RK4 stability
-    dt = 1e-3;
-    time = 0:dt:120; %time vector
+    %dt = 1/10/Ni^2;
+    txt = ['=> dt set to ',num2str(dt)];disp(txt)
+    time = 0:dt:end_time; %time vector
 
     
     % Allocating storage
@@ -44,7 +45,9 @@ function [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr,
 %     D = get_FourierDiffMatrix(Ni+1,false)/2;
 %     D3 = D*D*D;
     for t=1:length(time)-1
-
+        if mod(t,100000) == 0
+            txt = ['=> t = ',num2str(round(time(t),2))];disp(txt)
+        end
         % Diff. matrix Runge-Kutta
 %         K1 = -6*u'*D*u - D3*u;
 %         K2 = -6*(u'+dt*K1/2)*D*(u+dt*K1/2) - D3*(u+dt*K1/2);
@@ -52,10 +55,10 @@ function [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr,
 %         K4 = -6*(u'+dt*K3/2)*D*(u+dt*K3/2) - D3*(u+dt*K3/2);
 
         %FFT Runge-Kutta
-        K1 = KdV(u, scaling);
-        K2 = KdV(u+dt*K1/2, scaling);
-        K3 = KdV(u+dt*K2/2, scaling);
-        K4 = KdV(u+dt*K3, scaling);
+        K1 = KdV(u, scaling, dealiasing);
+        K2 = KdV(u+dt*K1/2, scaling, dealiasing);
+        K3 = KdV(u+dt*K2/2, scaling, dealiasing);
+        K4 = KdV(u+dt*K3, scaling, dealiasing);
         u = u + dt/6*(K1+2*K2+2*K3+K4);
         
         if saving_hist == 1 %saving each time step
