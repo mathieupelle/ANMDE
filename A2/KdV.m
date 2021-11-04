@@ -20,15 +20,21 @@ function u_t = KdV(u, s,dealiasing)
 %         u_t_fft_deal = [zeros(1,round((N-n)/2-1,0)), u_t_fft(round((N-n)/2,0):round((N-n)/2,0)+n), zeros(1,round((N-n)/2,0)-1)];
 %         u_t = ifft(ifftshift(u_t_fft_deal));
 
-        u_dea = ApplyDealiasing(u);
-        u_x_dea = ApplyDealiasing(u_x);
-        
-        
-        
-        u_t = -6*u_dea.*u_x_dea - u_xxx;
+            [N,tN] = size(u');
+            K = N/2*3; % 3/2 zero padding
+            upad = zeros(K,tN);
+            uxpad = zeros(K,tN);
+            indvpad = [1:N/2,K-N/2+1:K];
+            upad(indvpad,:) = u;
+            uxpad(indvpad,:) = u_x;
+            temp = fft(real(ifft(upad.*uxpad)));
+            temp = K/N *temp; % scale back to N-FFT
+            Fv2 = temp(indvpad); 
+            Fv2(N/2+1) = 0; % remove the padding zeros
+            nonlin = Fv2';
 
-       % nonlin = ifft(Dealias_Allan(fft(u),fft(u_x)));
-       % u_t = -6*nonlin - u_xxx;
+       %nonlin = ApplyDealiasing(u).*ApplyDealiasing(u_x);
+       u_t = -6*nonlin - u_xxx;
     end
     u_t = u_t'; 
 end

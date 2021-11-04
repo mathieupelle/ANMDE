@@ -7,7 +7,7 @@ set(groot, 'defaultLegendInterpreter','latex');
 set(0,'defaultAxesFontSize',12);
 set(0, 'DefaultLineLineWidth', 1);
 set(0, 'DefaultFigureRenderer', 'painters');
-set(0,'DefaultFigureWindowStyle','normal')
+set(0,'DefaultFigureWindowStyle','docked')
 %% Question (a) - Legendre Tau Method (LTM)
 
 %Input: 
@@ -412,37 +412,41 @@ ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 
 saving_hist = 1;
 conservation = 0;
-dealiasing = 1;
+dealiasing_mode = [0,1];
 
-Ni = 21;
-c = 1;
-x0 = 0;
+Ni = 51;
+c = 5;
+x0 = 1;
+for j=1:2
+    dealiasing = dealiasing_mode(j);
+    [u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation, dealiasing);
 
-[u_hist, u_ana, ~, x, time, ~] = RK4_KdV(Ni, c, x0, [-2*pi, 2*pi], saving_hist, conservation,dealiasing);
+    if dealiasing
+        cn_deal = fftshift(fft(u_hist));
+        cn_deal = cn_deal(round((length(u_hist(:,1))-Ni)/2,0):round((length(u_hist(:,1))-Ni)/2,0)+Ni,:);
+        cn_deal = cn_deal((Ni+1)/2+1:end,:);
+    else
 
-if dealiasing
-    cn_deal = fftshift(fft(u_hist));
-    cn_deal = cn_deal(round((length(u_hist(:,1))-Ni)/2,0):round((length(u_hist(:,1))-Ni)/2,0)+Ni,:);
-    cn = cn_deal((Ni+1)/2+1:end,:);
-else
-    
-    cn = fft(u_hist)/(Ni+1);
-    cn = fftshift(cn); % Re-order accordingly
-    k = 0:(Ni+1)/2-1;
-    cn = cn((Ni+1)/2+1:end,:);
+        cn = fft(u_hist)/(Ni+1);
+        cn = fftshift(cn); % Re-order accordingly
+        k = 0:(Ni+1)/2-1;
+        cn = cn((Ni+1)/2+1:end,:);
+    end
+
+    figure
+    for i=1:length(k)
+        semilogy(time, (abs(cn(i,:))),'DisplayName', num2str(k(i)))
+        hold on
+    end
+    xlabel('Time')
+    ylabel('$|c_n|$')
+    legend
 end
 
 figure
-for i=1:length(k)
-    semilogy(time, (abs(cn(i,:))),'DisplayName', num2str(k(i)))
-    hold on
-end
-xlabel('Time')
-ylabel('$|c_n|$')
-legend
+plot(k,std(abs(cn'))-std(abs(cn')))
 
-figure
-plot(k,std(abs(cn')))
+
 %% Question  (f)
 
 saving_hist = 1;
