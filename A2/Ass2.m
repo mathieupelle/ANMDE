@@ -185,7 +185,7 @@ conservation = 1;
 dealiasing = 0;
 
 Ni_lst = 2.^(3:7) + 1;
-%Ni_lst = 100;
+%Ni_lst = 101;
 finalL2norm = zeros(length(Ni_lst),1);
 for n=1:length(Ni_lst)
     Ni = Ni_lst(n);
