@@ -559,6 +559,7 @@ loglog(Ni_lst, time_arr_norm(:,1), '-b', 'DisplayName', 'Normalised CPU time (al
 loglog(Ni_lst,time_arr(:,2), '--g', 'DisplayName', 'CPU time [ms] (dealiased)')
 loglog(Ni_lst, time_arr_norm(:,2), '--b', 'DisplayName', 'Normalised CPU time (dealiased)')
 plot(Ni_lst, Ni_lst.*log(Ni_lst), '--k', 'DisplayName', '$N\log(N)$')
+plot(Ni_lst, Ni_lst.^2, '-.k', 'DisplayName', '$N^2$')
 grid on
 xlabel('N');
 ylabel('Performance');
