@@ -6,7 +6,7 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 set(0,'defaultAxesFontSize',12);
 set(0, 'DefaultLineLineWidth', 1);
-set(0, 'DefaultFigureRenderer', 'painters');
+%set(0, 'DefaultFigureRenderer', 'painters');
 set(0,'DefaultFigureWindowStyle','docked')
 %% Question (a) - Legendre Tau Method (LTM)
 
@@ -185,15 +185,15 @@ conservation = 1;
 dealiasing = 0;
 
 Ni_lst = 2.^(3:7) + 1;
-%Ni_lst = 101;
+Ni_lst = 111;
 finalL2norm = zeros(length(Ni_lst),1);
 for n=1:length(Ni_lst)
     Ni = Ni_lst(n);
     txt = ['=> Computing for N = ',num2str(Ni)]; disp(txt)
-    c = 5;
+    c = 1;
     x0 = 0;
-    x_limits = [-2*pi, 2*pi];
-    end_time = 2;
+    x_limits = [-2*pi, 6*pi];
+    end_time = 10;
 
     [u_hist, u_ana, errors, x, time, ~] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
     
@@ -224,11 +224,11 @@ for n=1:length(Ni_lst)
             figure('Name', 'L2 norm in time')
             plot(time, errors.L2norm)
             xlabel('Time')
-            ylabel('L2')
+            ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
             grid on
         end
         figure('Name', 'Final timestep')
-        plot(x, u_ana(:,end), 'DisplayName', 'analytic')
+        plot(x, u_ana(:,end), 'DisplayName', 'Analytic')
         hold on
         plot(x, u_hist(:,end), '--.k', 'DisplayName', 'spectral method')
         xlabel('x')
@@ -238,24 +238,25 @@ for n=1:length(Ni_lst)
     end
 end
 
-figure('Name', 'Convergence')
-loglog(Ni_lst, finalL2norm)
-grid on
-xlabel('N')
-ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
 
-if saving_hist == 1
+% figure('Name', 'Convergence')
+% plot(x, finalL2norm)
+% grid on
+% xlabel('N')
+% ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
+
+% if saving_hist == 1
     figure
     hold on
-    for i = 1:10:length(time)
-        plot(x,u_hist(:,i), '-r')
+    for i = 1:1000:length(time)
+        plot(x,abs(u_ana(:,i)-u_hist(:,i)), '-r')
         hold on
-        plot(x,u_ana(:,i), '--ok')
-        ylim([-0.5 3]);
+        %plot(x,u_ana(:,i), '--ok')
+        %ylim([0 max(u_ana(:,1))*1.02]);
         pause(0.005)
         clf
     end
-end
+% end
 
 %% Question (d) - conservation of quantities
 
@@ -272,13 +273,13 @@ f4 = figure;
 f5 = figure;
 for i=1:length(c_lst)
     
-    Ni = 101;
+    Ni = 151;
     x0 = 0;
     c = c_lst(i);
-    x_limits = [-4*pi, 4*pi];
-    end_time = 5;
+    x_limits = [-2*pi, 4*pi];
+    end_time = 10;
     
-    [~, ~, errors, ~, time, quant] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
+    [u_hist, ~, errors, x, time, quant] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
     
     set(0, 'CurrentFigure', f1)
     semilogy(time, errors.norm2)
@@ -297,35 +298,43 @@ for i=1:length(c_lst)
     legend(leg, 'Location', 'Best')
 
     set(0, 'CurrentFigure', f3)
-    err = abs(quant.M - quant.M_ana)./abs(quant.M_ana);
+    err = abs(quant.M - quant.M_ana);
     semilogy(time, err)
     grid on
     hold on
     xlabel('Time')
-    ylabel('Relative error in Mass')
+    ylabel('Error in Mass')
     legend(leg, 'Location', 'Best')
     
     set(0, 'CurrentFigure', f4)
-    err = abs(quant.V - quant.V_ana)./abs(quant.V_ana);
+    err = abs(quant.V - quant.V_ana);
     semilogy(time, err)
     grid on
     hold on
     xlabel('Time')
-    ylabel('Relative error in Momentum')
+    ylabel('Error in Momentum')
     legend(leg, 'Location', 'Best')
     
     
     set(0, 'CurrentFigure', f5)
-    err = abs(quant.E - quant.E_ana)./abs(quant.E_ana);
+    err = abs(quant.E - quant.E_ana);
     semilogy(time, err)
     grid on
     hold on
     xlabel('Time')
-    ylabel('Relative error in Energy')
+    ylabel('Error in Energy')
     legend(leg, 'Location', 'Best')
     
 end
-
+    figure
+    hold on
+    for i = 1:1000:length(time)
+        plot(x,u_hist(:,i), '-r')
+        hold on
+        ylim([-0.5 3]);
+        pause(0.005)
+        clf
+    end
 %% Question (d) - error for different velocities
 
 x0 = 0;
@@ -415,12 +424,17 @@ for n=1:length(Ni_lst)
     end
 end
 
+
+cols = {[0.8500, 0.3250, 0.0980], [0.9290, 0.6940, 0.1250], [0.4940, 0.1840, 0.5560], [0.4660, 0.6740, 0.1880]};
 figure('Name', 'Convergence plot with different range')
-loglog(Ni_lst, finalL2norm, '-o')
+for i=1:length(d_lst)
+    loglog(Ni_lst, finalL2norm(i,:), '-o', 'Color', cols{i})
+    hold on
+end
 xlabel('N')
 grid on
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
-legend({'d = $\pi$', 'd = $2\pi$', 'd = $3\pi$', 'd = $4\pi$'})
+legend({'d = $\pi$', 'd = $2\pi$', 'd = $3\pi$', 'd = $4\pi$'},'Location', 'Southwest')
 
 %% Question (e)
 
@@ -506,21 +520,22 @@ end_time = 120;
 % Calling function to simulate the collision of solitons
 [u_hist, errors, x, time, quant] = RK4_KdV_collision(Ni, c_arr, x0_arr, x_limits, end_time, saving_hist, conservation, dealiasing);
 
-[X,T] = meshgrid(x,time(1:800:end));
+step = 6000;
+[X,T] = meshgrid(x,time(1:step:end));
 figure('Name', 'Spectral method')
-surf(X,T,u_hist(:,1:800:end)')
+surf(X,T,u_hist(:,1:step:end)')
 xlabel('x')
 ylabel('t')
 zlabel('$\overline{u}(x,t)$')
 
-figure
-hold on
-for i = 1:1000:length(time)
-    plot(x,u_hist(:,i), '-r')
-    hold on
-    pause(0.001)
-    clf
-end
+% figure
+% hold on
+% for i = 1:1000:length(time)
+%     plot(x,u_hist(:,i), '-r')
+%     hold on
+%     pause(0.001)
+%     clf
+% end
 
 %% Question (g)
 
