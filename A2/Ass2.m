@@ -486,7 +486,7 @@ for j=1:2
 end
 
 figure('Name','Effect of aliasing on final solution')
-plot(time, errors_alias.L2norm,  'DisplayName', 'Aliased')
+semilogy(time, errors_alias.L2norm,  'DisplayName', 'Aliased')
 hold on
 plot(time, errors_deal.L2norm, 'DisplayName', 'Dealiased')
 ylabel('$||u-\mathcal{I}_Nu||_{L2}$')
@@ -495,12 +495,12 @@ grid on
 legend 
 
 figure('Name','Std over mean')
-semilogy(k,std(abs(cn'))./abs(mean(cn')))
+semilogy(k,std(abs(cn'))./abs(mean(cn')), '-d')
 hold on
-semilogy(k,std(abs(cn_deal'))./abs(mean(cn_deal')))
+semilogy(k,std(abs(cn_deal'))./abs(mean(cn_deal')), '-d')
 legend('Baseline',"Orszag's rule")
 xlabel('$n$')
-ylabel('$\sigma_n/\bar{c_n}$')
+ylabel('$\sigma_{\bar{c_n}}/\bar{c_n}$')
 grid on
 
 
@@ -542,7 +542,7 @@ zlabel('$\overline{u}(x,t)$')
 saving_hist = 1;
 conservation = 0;
 
-Ni_lst = 2.^(3:7) + 1;
+Ni_lst = 2.^(3:8) + 1;
 time_arr = zeros(length(Ni_lst),2);
 time_arr_norm = zeros(length(Ni_lst),2);
 for j=1:2
@@ -551,14 +551,14 @@ for j=1:2
     else
         dealiasing = 1;
     end
-    parfor n=1:length(Ni_lst)
+    for n=1:length(Ni_lst)
         Ni = Ni_lst(n);
         txt = ['=> Computing for N = ',num2str(Ni)];
         disp(txt)
         c = 5;
         x0 = 0;
-        x_limits = [-4*pi, 4*pi];
-        end_time = 5;
+        x_limits = [-2*pi, 2*pi];
+        end_time = 0.1;
 
         tic;
         [u_hist, u_ana, errors, x, time, quant] = RK4_KdV(Ni, c, x0, x_limits, end_time, saving_hist, conservation, dealiasing);
